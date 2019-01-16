@@ -3,8 +3,8 @@
 | [![Build Status](https://travis-ci.org/sisl/JuliaPackageTemplate.jl.svg?branch=master)](https://travis-ci.org/sisl/JuliaPackageTemplate.jl) | [![Coverage Status](https://coveralls.io/repos/github/sisl/JuliaPackageTemplate.jl/badge.svg?branch=master)](https://coveralls.io/github/sisl/JuliaPackageTemplate.jl?branch=master) | [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sisl.github.io/JuliaPackageTemplate.jl/latest) |
 
 # JuliaPackageTemplate.jl
-JuliaPackageTemplate contains the research work of Duncan Eddy on the tasking of 
-Earth observation satellites.
+JuliaPackageTemplate provides an example Julia project template to quickly setup
+continuous integration, test coverage reports, and automatic documentation deployment.
 
 ## Documentation
 
@@ -15,7 +15,7 @@ More example code and examples will be added as time permits.
 ## Configuring Package Name
 
 To start off with, look through the package and replace `JuliaPackageTemplate` 
-with your own project name. The 
+with your own project name.
 
 `deps` contains C/C++ file dependencies of the packages which are compiled when
 the package is installed by using the BinDeps.jl package.
@@ -74,6 +74,17 @@ webpage. This can be done either for your presonal repositories here:
 or for your organizations' repositories here:
 
 https://travis-ci.org/organizations/YOUR_GITHUB_ORGANIZATION_NAME/repositories
+
+Note: If the project does not appear immediately, you may need to hit the "sync
+repositories" button to have it appear.
+
+## Setting Up Test Coverage
+
+To set up test coverage, go to [coveralls.io](https://coveralls.io/repos/new),
+login with your github account, and activate the project to add coverage reports.
+
+Note: If the project does not appear immediately, you may need to hit the "sync
+repositories" button to have it appear.
 
 ## Setting Up Documentation Deployment
 
