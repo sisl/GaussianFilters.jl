@@ -16,7 +16,7 @@ Returns:
 """
 function rubber_ducks_in_earth(duck_volume::Real, r_earth::Real=6378000)
     # Volume of spherrical Earth
-    v_earth =  4.0/3.0*pi*r^3
+    v_earth =  4.0/3.0*pi*r_earth^3
 
     # Return number of ducks in Earth
     return v_earth/duck_volume
