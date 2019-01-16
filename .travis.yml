@@ -1,0 +1,60 @@
+language: julia
+
+# Select operation systems to test against
+os:
+  - linux
+  - osx
+  # - windows # Travis doesn't have windows build servers, so this option isn't viable
+
+# Select Julia language versions to test against
+julia:
+  - 1.0
+  - 1.1
+  - nightly
+
+# Disable email notifications when builds fail
+notifications:
+  email: false
+
+# Specify test matrix to 
+matrix:
+  allow_failures:
+    - julia: 1.1
+    - julia: nightly
+
+# Things to 
+before_install:
+  # Run bash setup script before main build
+  - bash setup_script.sh
+
+script:
+  # Run package 
+  - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build(); Pkg.test("SatelliteDynamics"; coverage=true)'
+
+# After successfuly build submit coverage report and deploy updated documentation
+# But limit deployment to the linux worker so this is done only once.
+after_success:
+  # Install rpackage required to parse coverage reports
+  - julia --project -e 'import Pkg; Pkg.add("Coverage");'
+
+  # Submit test coverage report
+  - julia --project -e 'using Coverage; Coveralls.submit(Coveralls.process_folder())'
+
+  # Install required 
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install qt5; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install basictex; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq x11-apps libxt6 libxrender1 libxext6 libgl1-mesa-glx qtbase5-dev qtdeclarative5-dev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --no-install-recommends texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng texlive-latex-recommended; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GKSwstype=svg; fi
+
+  # Install required packages for building Julia documentation.
+  # This must happen AFTER the 
+  - julia --project -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("DocumenterTools");'
+  - julia --project -e 'import Pkg; Pkg.add("Plots");'
+  - julia --project -e 'import Pkg; Pkg.add("LaTeXStrings")'
+
+  # Build and deploy documentation
+  - julia --project ./docs/make.jl
