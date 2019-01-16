@@ -88,11 +88,19 @@ repositories" button to have it appear.
 
 ## Setting Up Documentation Deployment
 
+If you have not done so, set up github pages by adding a pages repository to your
+github account by following the [setup instructions](https://pages.github.com/) or just add an empty repository
+named `username.github.io` or `orgname.github.io` to your personal or organization account. This repository can be private.
+
 Documentation and documentation deployment is accomplished with the Julia packager
 `Documenter.jl`
 
 To setup the automated deployment of documentation as part of the CI build process
 follow the [Deploy Instructions](https://juliadocs.github.io/Documenter.jl/stable/man/hosting/).
+
+This involves two steps:
+1. Adding a deploy key to the github deploy keys to allow travis CI to push to new pages to the repository.
+2. Adding an environment variable to your Travis CI build settings with the deployment keys.
 
 ## Adding package to Julia Package Repository
 
