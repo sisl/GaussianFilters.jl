@@ -30,4 +30,18 @@ Units: _ducks/sec_
 """
 const RUBBER_DUCK_PER_SEC = 200.0
 
+export add_one
+"""
+Adds one to a value
+
+Argments:
+- `val:Real` A value
+
+Returns:
+- `x::Float64` Value plus one
+"""
+function add_one(val::Real)
+    return val + 1
+end
+
 end # End of module RubberDucks (This comment is nice to distinguish from an end)
