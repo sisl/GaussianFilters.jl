@@ -42,7 +42,7 @@ after_success:
   # Install packages required for documentation generation
   - julia --project -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("DocumenterTools");'
   - julia --project -e 'import Pkg; Pkg.add("Plots");'
-  - julia --project -e 'import Pkg; Pkg.add("LaTeXStrings")
+  - julia --project -e 'import Pkg; Pkg.add("LaTeXStrings");'
 
   # Build and deploy documentation
   - julia --project ./docs/make.jl
