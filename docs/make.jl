@@ -21,7 +21,7 @@ makedocs(
         "Examples" => Any[
             "Plotting Example" => "examples/plotting_example.md"
         ],
-        "Librrary Index" => "library_index.md",
+        "Library Index" => "library_index.md",
     ]
 )
 

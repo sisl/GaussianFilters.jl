@@ -6,7 +6,7 @@ of the documentation deployment process.
 The plots in this example are produced by the file `docks/src/makeplots.jl` The
 contents of that file are run each time the documentation is deployed. 
 
-![](../../plots/exmaple_plot.svg)
+![](../../plots/example_plot.svg)
 
 !!! note
 
