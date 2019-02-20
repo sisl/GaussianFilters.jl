@@ -1,5 +1,5 @@
-using Plots
-Plots.pgfplots()
+using Plots, LaTeXStrings
+Plots.gr()
 
 function  example_plot_function(plot_dir)
     # Simulate Keplerian Orbit
