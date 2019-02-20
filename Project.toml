@@ -4,7 +4,6 @@ authors = ["Duncan Eddy <duncan.eddy@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
