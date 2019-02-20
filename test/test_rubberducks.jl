@@ -6,3 +6,7 @@ end
 let
     @test RUBBER_DUCK_PER_SEC == 200
 end
+
+let
+    @test add_one(1) == 2
+end

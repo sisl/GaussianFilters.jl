@@ -26,6 +26,8 @@ the package is installed by using the BinDeps.jl package.
 
 `test` contains unit tests which can be run locally
 
+Also be sure to update the project UUID in `Project.toml`!
+
 ## Testing Locally
 
 It is possible to test the package and code locally before commiting the update
