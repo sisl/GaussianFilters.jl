@@ -1,15 +1,18 @@
 __precompile__(true)
-module JuliaPackageTemplate
+module GaussianFilters
 
 # Usings
 using Reexport
 
 # Base Module Includes
-include("submodule.jl")
-include("rubber_ducks.jl")
+include("classes.jl")
+include("step.jl")
 
 # Export Module Contents
-@reexport using JuliaPackageTemplate.YourSubmodule
-@reexport using JuliaPackageTemplate.RubberDucks
+#@reexport using GaussianFilters.YourSubmodule
+#@reexport using GaussianFilters.RubberDucks
+@reexport using GaussianFilters.Classes
+@reexport using GaussianFilters.PHDFilter
+
 
 end # module
