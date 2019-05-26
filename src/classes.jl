@@ -28,8 +28,6 @@ struct Spawn{β, dyn}
     dyn :: Dynamics
 end
 
-
-
 """
     PHDFilter(γ, spawn, dyn, meas, Ps, Pd)
 
