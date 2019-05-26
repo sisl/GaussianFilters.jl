@@ -7,7 +7,7 @@
     Σ: Covariances of the model
 """
 
-struct GaussianMixture{N, w, μ, Σ}
+struct GaussianMixture
     N :: Int64
     w :: Vector{Float64}
     μ :: Matrix{Float64,2}
@@ -23,7 +23,7 @@ end
     dyn: Dynamics
 """
 
-struct Spawn{β, dyn}
+struct Spawn
     β :: GaussianMixture
     dyn :: Dynamics
 end
@@ -42,7 +42,7 @@ end
     Pd: Detection probability
 """
 
-struct PHDFilter{γ, spawn, dyn, meas, Ps, Pd}
+struct PHDFilter
     γ :: GaussianMixture
     spawn :: Spawn
     dyn :: Dynamics
