@@ -20,8 +20,8 @@ function prune(x,T,U,J_max)
 
 	# setup output vectors
 	w_new = zeros(J_max,1)
-	m_new = zeros(J_max,n)
-	P_new = zeros(J_max,n,n)
+	μ_new = zeros(J_max,n)
+	Σ_new = zeros(J_max,n,n)
 
 	# perform pruning
 	while length(I) != 0
@@ -56,13 +56,17 @@ function prune(x,T,U,J_max)
 		I = setdiff(I,L)
 	end
 
-	# only keep the J_max with highest weights
-	if l > J_max
+
+	if l > J_max 	# only keep the J_max with highest weights
 		idxs = sort!([1:size(w_new);], by=i->(w_new[i]), rev=true)
 		idxs = idxs[1:J_max]
 		w_new = w_new[idxs]
 		μ_new = μ_new[idxs,:]
 		Σ_new = Σ_new[idxs,:,:]
+	else		# drop zeros at end
+		w_new = w_new[1:l]
+		μ_new = μ_new[1:l,:]
+		Σ_new = Σ_new[1:l,:,:]
 	end
 
 	N = length(w_new)
