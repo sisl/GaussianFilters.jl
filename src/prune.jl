@@ -32,7 +32,7 @@ function prune(x,T,U,J_max)
 		L = []
 		for i in I
 			delta = x.μ[i,:]-x.μ[j,:]
-			if dot(delta, inv(x.Σ)*delta) < U
+			if dot(delta, inv(x.Σ[i,:,:])*delta) < U
 				push!(L,i)
 			end
 		end
