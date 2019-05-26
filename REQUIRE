@@ -1,3 +1,6 @@
 julia 1.0
 Reexport
 BinDeps
+LinearAlgebra
+Distributions
+StatsBase
