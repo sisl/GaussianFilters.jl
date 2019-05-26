@@ -27,3 +27,29 @@ struct Spawn{β, dyn}
     β :: GaussianMixture
     dyn :: Dynamics
 end
+
+
+
+"""
+    PHDFilter(γ, spawn, dyn, meas, Ps, Pd)
+
+    Sets up a PHD Filter
+
+    Arguments:
+    γ: Birth intensity
+    spawn: Spawning intensity
+    dyn: Dynamics
+    meas: Measurements
+    Ps: Survival probability
+    Pd: Detection probability
+"""
+
+struct PHDFilter{γ, spawn, dyn, meas, Ps, Pd}
+    γ :: GaussianMixture
+    spawn :: Spawn
+    dyn :: Dynamics
+    meas :: Measurement
+    Ps :: Float64
+    Pd :: Float64
+end
+
