@@ -9,7 +9,7 @@ process noise matrix Q and constant matrix d
 mutable struct Dynamics
     A::Matrix{Float64}
     Q::Matrix{Float64}
-    d::Matrix{Float64}
+    d::Vector{Float64}
 end
 
 ## Constructors ##
