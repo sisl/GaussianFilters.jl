@@ -48,19 +48,16 @@ end
     Σ: Covariances of the model
 """
 
-struct GaussianMixture
-    N :: Int64
-    w :: Vector{Float64}
-    μ :: Matrix{Float64}
-    Σ :: Array{Float64,3}
-end
+struct GaussianMixture{T<:Number}
+    N::Int64
+    w::Vector{Float64}
+    μ::Vector{Vector{T}}
+    Σ::Vector{Matrix{T}}
+end    
 
-function GaussianMixture(w,μ,Σ)
-    return GaussianMixture(N = length(w), w, μ, Σ)
-end
-
-function GaussianMixture(N,w,μ,Σ)
-    return GaussianMixture(N,w,μ,Σ)
+function GaussianMixture(w, μ::Vector{Vector{T}}, Σ) where T
+    @assert length(μ) == length(Σ) == length(w) "bad length"
+    GaussianMixture{T}(length(w), w, μ, Σ) 
 end
 
 """
