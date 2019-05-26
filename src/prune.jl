@@ -69,7 +69,6 @@ function prune(x,T,U,J_max)
 		Σ_new = Σ_new[1:l,:,:]
 	end
 
-	N = length(w_new)
-	x_new = GaussianMixture(N,w_new,μ_new,Σ_new)
+	x_new = GaussianMixture(w_new,μ_new,Σ_new)
 	return x_new
 end
