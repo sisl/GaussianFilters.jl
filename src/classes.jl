@@ -42,8 +42,9 @@ end
     GaussianMixture(N, w, μ, Σ)
 
     Arguments:
-    N: number of models
-    μ: means of the model
+    N: Number of models
+    w: Weights
+    μ: Means of the model
     Σ: Covariances of the model
 """
 
