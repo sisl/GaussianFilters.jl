@@ -1,3 +1,33 @@
+### Measurement Model ###
+"""
+    Measurement(C,R)
+
+Construct measurement model with observation matrix C and sensor
+noise matrix R
+"""
+mutable struct Measurement{a,b}
+    C::Matrix{a}
+    R::Matrix{b}
+end
+
+### Dynamics Model ###
+"""
+    Dynamics(A,Q,d)
+    Dynamics(A,Q)
+
+Construct linear dynamics model with; transition matrix A,
+process noise matrix Q and offset vector d
+"""
+mutable struct Dynamics{a,b,c}
+    A::Matrix{a}
+    Q::Matrix{b}
+    d::Vector{c}
+end
+
+## Constructors ##
+function Dynamics(A,Q)
+    return Dynamics(A,Q,Int8[])
+end
 
 """
     GaussianMixture(N, w, μ, Σ)
@@ -56,35 +86,4 @@ struct PHDFilter
     meas::Measurement
     Ps::Float64
     Pd::Float64
-end
-
-### Measurement Model ###
-"""
-    Measurement(C,R)
-
-Construct measurement model with observation matrix C and sensor
-noise matrix R
-"""
-mutable struct Measurement{a,b}
-    C::Matrix{a}
-    R::Matrix{b}
-end
-
-### Dynamics Model ###
-"""
-    Dynamics(A,Q,d)
-    Dynamics(A,Q)
-
-Construct linear dynamics model with; transition matrix A,
-process noise matrix Q and offset vector d
-"""
-mutable struct Dynamics{a,b,c}
-    A::Matrix{a}
-    Q::Matrix{b}
-    d::Vector{c}
-end
-
-## Constructors ##
-function Dynamics(A,Q)
-    return Dynamics(A,Q,Int8[])
 end
