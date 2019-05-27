@@ -47,7 +47,8 @@ struct GaussianMixture{T<:Number}
 end
 
 function GaussianMixture(w, μ::Vector{Vector{T}}, Σ::Vector{Matrix{K}}) where {T,K}
-    @assert length(μ) == length(Σ) == length(w) "bad length"
+    @assert length(μ) == length(Σ) == length(w) "Number
+     of mixtures inconsistent"
     GaussianMixture{promote_type(T,K)}(length(w), w, μ, Σ)
 end
 
@@ -86,4 +87,5 @@ struct PHDFilter
     meas::Measurement
     Ps::Float64
     Pd::Float64
+    κ::Function
 end
