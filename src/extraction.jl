@@ -12,8 +12,8 @@
         x_new: Extracted set of Gaussian Mixtures
 """
 
-function MultipleTargetStateExtraction(x, threshold)::GaussianMixture
-
+function MultipleTargetStateExtraction(x, threshold)
+    
     Jk = length(x.w)    
     new_w = zeros(Jk)
     new_μ = zeros(size(x.μ))
