@@ -31,6 +31,7 @@ Notes:
 References:
 1. List citations to references used in writing the function here
 """
+
 function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
 
     J_k = x.N
@@ -114,7 +115,6 @@ function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
     x_n = GaussianMixture(w_n, μ_n, Σ_n)
     return x_n
 end
-
 
 """
 Function to combine stepping through PHD filter and pruning resultant distribution
