@@ -46,9 +46,9 @@ struct GaussianMixture{T<:Number}
     Σ::Vector{Matrix{T}}
 end
 
-function GaussianMixture(w, μ::Vector{Vector{T}}, Σ) where T
+function GaussianMixture(w, μ::Vector{Vector{T}}, Σ::Vector{Matrix{K}}) where {T,K}
     @assert length(μ) == length(Σ) == length(w) "bad length"
-    GaussianMixture{T}(length(w), w, μ, Σ)
+    GaussianMixture{promote_type(T,K)}(length(w), w, μ, Σ)
 end
 
 """
