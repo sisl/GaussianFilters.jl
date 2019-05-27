@@ -15,17 +15,15 @@
 function MultipleTargetStateExtraction(x, threshold)
     
     Jk = length(x.w)    
-    new_w = zeros(Jk)
-    new_μ = zeros(size(x.μ))
-    new_Σ = zeros(size(x.Σ))
-    
-    j = 1
+    new_w = []
+    new_μ = []
+    new_Σ = []
+
     for i=1:Jk
         if x.w[i] > threshold
-            new_w[j] = w[i]
-            new_μ[j] = μ[i]
-            new_Σ[j,:,:] = Σ[i,:,:]
-            j += 1
+            push!(new_w, w[i])
+            push!(new_μ, μ[i])
+            push!(new_Σ, Σ[i])
         end
     end
     
