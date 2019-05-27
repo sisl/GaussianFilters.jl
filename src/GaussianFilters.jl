@@ -2,10 +2,11 @@ __precompile__(true)
 module GaussianFilters
 
 # Usings
-using Reexport
+#using Reexport
 using LinearAlgebra
 using Random
 import Random: rand
+import Base: step
 
 export
 	Measurement,
@@ -16,7 +17,7 @@ export
 	step,
 	prune,
 	step_prune,
-	multiple_target_state_extraction,
+	multiple_target_state_extraction
 
 # Base Module Includes
 include("classes.jl")
