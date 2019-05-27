@@ -1,8 +1,3 @@
-__precompile__(true)
-module PHDFiltering
-
-export step, prune, step_prune
-
 """
 Function to evaluate multivariate normal pdf function parameterized by μ
 and Σ at x
@@ -36,42 +31,43 @@ Notes:
 References:
 1. List citations to references used in writing the function here
 """
-function step(x::GaussianMixture, Z::Vector{Vector}, PHD::PHDFilter)
+function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
 
     J_k = x.N
-    w_p = []
-    μ_p = []
-    Σ_p = []
+    n = length(x.μ[1])
+    J_γ = PHD.γ.N
+    J_β = PHD.spawn.β.N
+    tot = J_γ+J_β*J_k+J_k
+    w_p = [0.0 for i in 1:tot]
+    μ_p = [zeros(n) for i in 1:tot]
+    Σ_p = [zeros(n,n) for i in 1:tot]
     
     # 1. Prediction for birth targets
-    J_γ = PHD.γ.N
+    i = 0
     for j in 1:J_γ
-        push!(w_p,PHD.γ.w[j])
-        push!(μ_p,PHD.γ.μ[j])
-        push!(Σ_p,PHD.γ.Σ[j]) 
+        i += 1
+        w_p[i] = PHD.γ.w[j]
+        μ_p[i] = PHD.γ.μ[j]
+        Σ_p[i] = PHD.γ.Σ[j]
     end
 
-    J_β = PHD.spawn.β.N
+    
     for j in 1:J_β, ℓ in 1:J_k
+        i += 1
         spawn_dyn = PHD.spawn.dyn[j]
-        push!(w_p, x.w[ℓ]*PHD.spawn.β.w[j])
-
-        μ_add = spawn_dyn.d + spawn_dyn.A*x.μ[ℓ]
-        push(μ_p, μ_add)
-
-        Σ_add = spawn_dyn.Q + spawn_dyn.A*x.Σ[ℓ]*spawn_dyn.A'
-        push!(Σ_p, Σ_add) 
+        w_p[i] = x.w[ℓ]*PHD.spawn.β.w[j]
+        μ_p[i] =  spawn_dyn.d + spawn_dyn.A*x.μ[ℓ]
+        Σ_p[i] = spawn_dyn.Q + spawn_dyn.A*x.Σ[ℓ]*spawn_dyn.A'
     end
 
     # 2. Prediction for existing targets
     for j in 1:J_k
-        push!(w_p, PHD.Ps*x.w[j])
-
-        push!(μ_p, PHD.dyn.A*x.μ[j])
-
-        Σ_add = PHD.dyn.Q + PHD.dyn.A*x.Σ[j]*PHD.dyn.A'
-        push!(Σ_p, Σ_add) 
+        i += 1
+        w_p[i] = PHD.Ps*x.w[j]
+        μ_p[i] =  PHD.dyn.A*x.μ[j]
+        Σ_p[i] = PHD.dyn.Q + PHD.dyn.A*x.Σ[j]*PHD.dyn.A'
     end
+    @assert i == tot "Poor Indexing"
     x_p = GaussianMixture(w_p, μ_p, Σ_p)
 
     # 3. Construction of PHD update components
@@ -96,11 +92,11 @@ function step(x::GaussianMixture, Z::Vector{Vector}, PHD::PHDFilter)
     end
 
     # 4. Update
-    w_n = []
-    μ_n = []
-    Σ_n = []
+    w_n = similar(x_p.w,0)
+    μ_n = similar(x_p.μ,0)
+    Σ_n = similar(x_p.Σ,0)
     for j in 1:J_p
-        push!(w_n,(1-Pd)*w_p[j])
+        push!(w_n,(1-PHD.Pd)*w_p[j])
         push!(μ_n, x_p.μ[j])
         push!(Σ_n, x_p.Σ[j])
     end
@@ -108,23 +104,16 @@ function step(x::GaussianMixture, Z::Vector{Vector}, PHD::PHDFilter)
     for z in Z
         w_ntemp = []
         for j in 1:J_p
-            push!(w_ntemp, Pd*x_p.w[j]*MvNormalPDF(z,η_n[j],Σ_n[j]))
-            push!(μ_n, x_p[j] + K_n[j]*(z-η_n[j]))
+            push!(w_ntemp, PHD.Pd*x_p.w[j]*MvNormalPDF(z,η_n[j],S_n[j]))
+            push!(μ_n, x_p.μ[j] + K_n[j]*(z-η_n[j]))
             push!(Σ_n, P_n[j])
         end
-        push!(w_n, w_ntemp ./ (PDF.κ(z) + sum(w_ntemp)))
+        append!(w_n, w_ntemp ./ (PHD.κ(z) + sum(w_ntemp)))
     end  
   
     x_n = GaussianMixture(w_n, μ_n, Σ_n)
     return x_n
 end
-
-
-
-
-"""
-INSERT PRUNE
-"""
 
 
 """
@@ -150,10 +139,3 @@ function step_prune(x::GaussianMixture, Z::Matrix, PHD::PHDFilter, T::Real)
     xpp = prune(xp, T)
     return xp
 end
-
-
-
-
-
-
-end # End of module PHDStep
