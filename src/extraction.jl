@@ -12,20 +12,9 @@
         x_new: Extracted set of Gaussian Mixtures
 """
 
-function MultipleTargetStateExtraction(x, threshold)
+function multiple_target_state_extraction(x, threshold)
     
-    Jk = length(x.w)    
-    new_w = []
-    new_μ = []
-    new_Σ = []
-
-    for i=1:Jk
-        if x.w[i] > threshold
-            push!(new_w, w[i])
-            push!(new_μ, μ[i])
-            push!(new_Σ, Σ[i])
-        end
-    end
+    inds = x.w .> threshold
     
-    return GaussianMixture(new_w,new_μ,new_Σ)        
+    return GaussianMixture(x.w[inds], x.μ[inds], x.Σ[inds])        
 end
