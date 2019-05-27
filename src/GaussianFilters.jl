@@ -2,11 +2,12 @@ __precompile__(true)
 module GaussianFilters
 
 # Usings
-using Reexport
+using Reexport,
+LinearAlgebra
 
 # Base Module Includes
 include("classes.jl")
-include("step.jl")
+include("PHDStep.jl")
 
 # Export Module Contents
 #@reexport using GaussianFilters.YourSubmodule
