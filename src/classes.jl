@@ -70,8 +70,8 @@ end
 """
 
 struct Spawn
-    β :: GaussianMixture
-    dyn :: Dynamics
+    β::GaussianMixture
+    dyn::Vector{Dynamics}
 end
 
 """
@@ -89,10 +89,10 @@ end
 """
 
 struct PHDFilter
-    γ :: GaussianMixture
-    spawn :: Spawn
-    dyn :: Dynamics
-    meas :: Measurement
-    Ps :: Float64
-    Pd :: Float64
+    γ::GaussianMixture
+    spawn::Spawn
+    dyn::Dynamics
+    meas::Measurement
+    Ps::Float64
+    Pd::Float64
 end
