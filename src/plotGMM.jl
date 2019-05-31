@@ -2,7 +2,15 @@ using PyPlot
 using LinearAlgebra
 using Distributions
 
+"""
+Plot a 2D GMM
 
+Arguments:
+- `x::GaussianMixture` GMM State distribution. [Gaussian Mixture]
+- `xlim::Vector` [xmin,xmax] for plotting
+- `ylim::Vector` [ymin,ymax] for plotting
+- `Resolution::Integer` Number of points between xlim (and ylim)
+"""
 function plot2dGMM(x::GaussianMixture, xlim, ylim, resolution)
 
 	# Form grid
@@ -31,6 +39,15 @@ function plot2dGMM(x::GaussianMixture, xlim, ylim, resolution)
 	colorbar()
 end
 
+
+"""
+Plot a 1D GMM
+
+Arguments:
+- `x::GaussianMixture` GMM State distribution. [Gaussian Mixture]
+- `xlim::Vector` [xmin,xmax] for plotting
+- `Resolution::Integer` Number of points between xlim
+"""
 function plot1dGMM(x::GaussianMixture, xlim, resolution)
 
 	# Form grid
