@@ -41,7 +41,7 @@ function prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
 
 		# determine merged parameters
 		w_tilde = sum(x.w[L])
-		μ_tilde = [1/w_tilde * dot(x.w[L],x.μ[L])]
+		μ_tilde = 1/w_tilde * sum(x.w[L].*x.μ[L])
 		Σ_tilde = zeros(n,n)
 		for i in L
 			tmp = x.Σ[i] + (μ_tilde-x.μ[i])*(μ_tilde-x.μ[i])'
