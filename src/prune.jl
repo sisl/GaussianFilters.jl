@@ -38,8 +38,6 @@ function prune(x,T,U,J_max)
 				push!(L,i)
 			end
 		end
-		println(L)
-
 
 		# determine merged parameters
 		w_tilde = sum(x.w[L])
@@ -62,7 +60,6 @@ function prune(x,T,U,J_max)
 
 
 	if l > J_max 	# only keep the J_max with highest weights
-		println(w_new)
 		idxs = sort!([1:length(w_new);], by=i->(w_new[i]), rev=true)
 		idxs = idxs[1:J_max]
 		w_new = w_new[idxs]
