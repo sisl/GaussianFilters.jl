@@ -6,12 +6,12 @@ using LinearAlgebra
 Prune the posterior Gaussian-Mixture
 
 Arguments:
-	x: posterior Gaussian-Mixture
-	T: truncation threshold
-	U: merging threshold
-	J_max: maximum number of features
+- `x::GaussianMixture` Posterior state distribution. [Gaussian Mixture]
+- `T::Real` Truncation threshold.  Drop distributions with weight less than T
+- `U::Real` Merging threshold.  Merge if (μ_1-μ_2)^T * Σ^-1 * (μ_1-μ_2) < U
+- `J_max::Integer` Maximum number of features
 """
-function prune(x,T,U,J_max)
+function prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
 	l = 0
 	J_k = x.N
 	n = length(x.μ[1])
