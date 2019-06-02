@@ -15,8 +15,8 @@ include("./extraction.jl")
 F = [ Matrix{Float64}(I,2,2) Δ*Matrix{Float64}(I,2,2) ;
     zeros(Float64,2,2) Matrix{Float64}(I,2,2) ]
 
-Q  = σ_p^2 * [ (Δ^4)/4*Matrix{Float64}(I,2,2) (Δ^3)/2*Matrix{Float64}(I,2,2) ;
-            (Δ^3)/2*Matrix{Float64}(I,2,2) (Δ^2)*Matrix{Float64}(I,2,2) ]
+Q  = σ_p^2 * [ (Δ^4)/4*Matrix{Float64}(I,2,2) (Δ^3)/4*Matrix{Float64}(I,2,2) ;
+            (Δ^3)/4*Matrix{Float64}(I,2,2) (Δ^2)*Matrix{Float64}(I,2,2) ]
 
 Dyns = Dynamics(F,Q)
 
@@ -34,7 +34,7 @@ m_γ2 = [ -250 , -250 , 0 , 0 ]
 P_γ = Matrix(Diagonal([100 , 100 , 25 , 25]))
 
 # Spawn (from existing targets) model
-Q_β = Matrix(Diagonal([100 , 100 , 400 , 400]))
+Q_β = Matrix(Diagonal([100.0 , 100.0 , 400.0 , 400.0]))
 
 β = GaussianMixture([w1, w2] , [m_γ1, m_γ2] , [P_γ, P_γ])
 spawn = Spawn(β , [Dyns,Dyns])
@@ -51,13 +51,13 @@ end
 # PHD parameters
 T = 10^-5 #Truncation threshold
 U = 4 #Merging threshold
-J_max = 100 #Max number of Gaussian terms
+J_max = 10 #Max number of Gaussian terms
 Ps = 0.99 #Probability of survival
 Pd = 0.98 #Probability of detection
 
 # Start with two existing targets
-w_target1 = 0.2;
-w_target2 = 0.2;
+w_target1 = 1;
+w_target2 = 1;
 mu_target1 = [ -300.0 , -300.0 , 0.0 , 0.0 ]
 mu_target2 = [ 300.0 , 300.0 , 0.0 , 0.0 ]
 P_agent1 = Matrix(Diagonal([100.0 , 100.0 , 25.0 , 25.0]))
@@ -69,15 +69,32 @@ P_agent2 = P_agent1
 phd = PHDFilter(γ,spawn,Dyns,Meas,Ps,Pd,κ)
 
 
-# Simulate system with PHD filter
-# Initilaise s.t. filter knows state of objects: x = γ
+# Simulate system - Truth
+xsim = [γ.μ]
+for t = 1 : Δ : 100
+    MVD = MvNormal(Dyns.Q)
+    x_new = [  Dyns.A*xsim[t][i] + rand(MVD,1)[:] for i=1:length(xsim[t]) ]
+    if t == 66
+        MVDspawn = MvNormal(Q_β)
+        x1 = xsim[t][1]
+        x_spawn = Dyns.A*x1 + rand(MVDspawn,1)[:]
+        push!(x_new,x_spawn)
+    end
+    if t == 40
+        x_birth = m_γ2
+        push!(x_new,x_birth)
+    end
+    push!(xsim,x_new)
+end
 
-#x = Array{GaussianMixture}
+# Initilaise s.t. filter knows state of objects: x = γ
 x =  [γ]
-for t = 1:Δ:10
+
+# Run PHD filter
+for t = 1:Δ:100
     println(t)
     MVD = MvNormal(Meas.R)
-    z = [ Meas.C*x[t].μ[i] + rand(MVD,1)[:] for i=1:x[t].N]
+    z = [ Meas.C*xsim[t][i] + rand(MVD,1)[:] for i=1:length(xsim[t])]
     x_new = step(x[t],z,phd)
 
     x_prune = prune(x_new,T,U,J_max)
@@ -94,6 +111,24 @@ for (t,x) in enumerate(x)
         plot(t,mu[1],"k.")
         subplot(212)
         plot(t,mu[2],"k.")
+    end
+    subplot(211)
+    plot(t,xsim[t][1][1],"b.")
+    plot(t,xsim[t][2][1],"b.")
+    if t > 66
+        plot(t,xsim[t][4][1],"b.")
+    end
+    if t > 40
+        plot(t,xsim[t][3][1],"r.")
+    end
+    subplot(212)
+    plot(t,xsim[t][1][2],"b.")
+    plot(t,xsim[t][2][2],"b.")
+    if t > 66
+        plot(t,xsim[t][4][2],"b.")
+    end
+    if t > 40
+        plot(t,xsim[t][3][2],"r.")
     end
 end
 subplot(211)
