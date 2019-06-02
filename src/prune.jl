@@ -6,12 +6,12 @@ using LinearAlgebra
 Prune the posterior Gaussian-Mixture
 
 Arguments:
-	x: posterior Gaussian-Mixture
-	T: truncation threshold
-	U: merging threshold
-	J_max: maximum number of features
+- `x::GaussianMixture` Posterior state distribution. [Gaussian Mixture]
+- `T::Real` Truncation threshold.  Drop distributions with weight less than T
+- `U::Real` Merging threshold.  Merge if (μ_1-μ_2)^T * Σ^-1 * (μ_1-μ_2) < U
+- `J_max::Integer` Maximum number of features
 """
-function prune(x,T,U,J_max)
+function prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
 	l = 0
 	J_k = x.N
 	n = length(x.μ[1])
@@ -38,12 +38,10 @@ function prune(x,T,U,J_max)
 				push!(L,i)
 			end
 		end
-		println(L)
-
 
 		# determine merged parameters
 		w_tilde = sum(x.w[L])
-		μ_tilde = [1/w_tilde * dot(x.w[L],x.μ[L])]
+		μ_tilde = 1/w_tilde * sum(x.w[L].*x.μ[L])
 		Σ_tilde = zeros(n,n)
 		for i in L
 			tmp = x.Σ[i] + (μ_tilde-x.μ[i])*(μ_tilde-x.μ[i])'
@@ -62,7 +60,6 @@ function prune(x,T,U,J_max)
 
 
 	if l > J_max 	# only keep the J_max with highest weights
-		println(w_new)
 		idxs = sort!([1:length(w_new);], by=i->(w_new[i]), rev=true)
 		idxs = idxs[1:J_max]
 		w_new = w_new[idxs]
