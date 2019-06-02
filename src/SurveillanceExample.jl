@@ -1,8 +1,11 @@
 using LinearAlgebra
 using Distributions
+using PyPlot
 
 include("./classes.jl")
 include("./PHDStep.jl")
+include("./prune.jl")
+include("./extraction.jl")
 
 σ_p = 5 #Standard deviation - process noise
 σ_m = 10 #Standard deviation - measurement noise
@@ -68,17 +71,35 @@ phd = PHDFilter(γ,spawn,Dyns,Meas,Ps,Pd,κ)
 
 # Simulate system with PHD filter
 # Initilaise s.t. filter knows state of objects: x = γ
-w = []
-mu = [[]]
-P = [zeros(1,1)]
 
 #x = Array{GaussianMixture}
 x =  [γ]
-for t = 1:Δ:100
+for t = 1:Δ:10
+    println(t)
     MVD = MvNormal(Meas.R)
     z = [ Meas.C*x[t].μ[i] + rand(MVD,1)[:] for i=1:x[t].N]
     x_new = step(x[t],z,phd)
-    println(typeof(x[1]))
-    println(typeof(x_new))
-    push!(x, x_new)
+
+    x_prune = prune(x_new,T,U,J_max)
+
+    push!(x, x_prune)
+
 end
+
+## plot results
+for (t,x) in enumerate(x)
+    mu_arr = multiple_target_state_extraction(x,0.5)
+    for mu in mu_arr
+        subplot(211)
+        plot(t,mu[1],"k.")
+        subplot(212)
+        plot(t,mu[2],"k.")
+    end
+end
+subplot(211)
+xlabel("time step")
+ylabel("x-coordinate")
+subplot(212)
+xlabel("time step")
+ylabel("y-coordinate")
+show()
