@@ -32,7 +32,7 @@ References:
 1. List citations to references used in writing the function here
 """
 
-function step(x::GaussianMixture, Z, PHD::PHDFilter)
+function step(x::GaussianMixture, Z::Vector{Vector{T}}, PHD::PHDFilter) where T <: Real
 
     J_k = x.N
     n = length(x.μ[1])
