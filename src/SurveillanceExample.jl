@@ -92,7 +92,6 @@ x =  [γ]
 
 # Run PHD filter
 for t = 1:Δ:100
-    println(t)
     MVD = MvNormal(Meas.R)
     z = [ Meas.C*xsim[t][i] + rand(MVD,1)[:] for i=1:length(xsim[t])]
     x_new = step(x[t],z,phd)
