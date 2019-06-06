@@ -32,7 +32,7 @@ References:
 1. List citations to references used in writing the function here
 """
 
-function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
+function step(x::GaussianMixture, Z::Vector{Vector{T}}, PHD::PHDFilter) where T <: Real
 
     J_k = x.N
     n = length(x.μ[1])
@@ -42,7 +42,7 @@ function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
     w_p = [0.0 for i in 1:tot]
     μ_p = [zeros(n) for i in 1:tot]
     Σ_p = [zeros(n,n) for i in 1:tot]
-    
+
     # 1. Prediction for birth targets
     i = 0
     for j in 1:J_γ
@@ -52,7 +52,7 @@ function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
         Σ_p[i] = PHD.γ.Σ[j]
     end
 
-    
+
     for j in 1:J_β, ℓ in 1:J_k
         i += 1
         spawn_dyn = PHD.spawn.dyn[j]
@@ -72,7 +72,7 @@ function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
     x_p = GaussianMixture(w_p, μ_p, Σ_p)
 
     # 3. Construction of PHD update components
-    
+
     J_p = x_p.N
 
     η_n = []
@@ -83,13 +83,13 @@ function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
         push!(η_n, PHD.meas.C*x_p.μ[j])
 
         S_add = PHD.meas.R + PHD.meas.C*x_p.Σ[j]*PHD.meas.C'
-        push!(S_n, S_add) 
+        push!(S_n, S_add)
 
         K_add = x_p.Σ[j]*PHD.meas.C'*inv(S_add)
         push!(K_n, K_add)
 
         P_add = (1.0I - K_add*PHD.meas.C)*x_p.Σ[j]
-        push!(P_n, P_add) 
+        push!(P_n, P_add)
     end
 
     # 4. Update
@@ -110,8 +110,8 @@ function step(x::GaussianMixture, Z::Vector{<:Vector}, PHD::PHDFilter)
             push!(Σ_n, P_n[j])
         end
         append!(w_n, w_ntemp ./ (PHD.κ(z) + sum(w_ntemp)))
-    end  
-  
+    end
+
     x_n = GaussianMixture(w_n, μ_n, Σ_n)
     return x_n
 end

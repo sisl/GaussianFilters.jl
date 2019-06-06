@@ -26,7 +26,8 @@ end
 
 ## Constructors ##
 function Dynamics(A,Q)
-    return Dynamics(A,Q,Int8[])
+    N = size(Q,1)
+    return Dynamics(A,Q,zeros(N))
 end
 
 """
