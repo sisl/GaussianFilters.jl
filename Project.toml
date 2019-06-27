@@ -1,11 +1,12 @@
-name = "JuliaPackageTemplate"
-uuid = "5d4bc1c0-0fb7-11e9-3252-b1aa07358cab"
-authors = ["Duncan Eddy <duncan.eddy@gmail.com>"]
+name = "GaussianFilters"
+uuid = "08d575fb-911d-541e-8431-6cfa767e7851"
+authors = ["Arec Jamgochian <arec.jamgochian@gmail.com>"]
 version = "0.1.0"
 
 [deps]
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+julia = "^1.0"

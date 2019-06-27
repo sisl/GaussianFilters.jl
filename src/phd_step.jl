@@ -134,8 +134,9 @@ Notes:
 References:
 1. List citations to references used in writing the function here
 """
-function step_prune(x::GaussianMixture, Z::Matrix, PHD::PHDFilter, T::Real)
+function step_prune(x::GaussianMixture, Z::Vector{Vector{N}}, PHD::PHDFilter,
+    T::Real, U::Real, J_max::Integer) where N <: Real
     xp = step(x, Z, PHD)
-    xpp = prune(xp, T)
-    return xp
+    xpp = prune(xp, T, U, J_max)
+    return xpp
 end

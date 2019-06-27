@@ -1,35 +1,37 @@
 __precompile__(true)
 module GaussianFilters
 
-# Usings
-#using Reexport
+
 using LinearAlgebra
 using Random
 import Random: rand
 import Base: step
+
+# Kalman, Extended Kalman, Unscented Kalman Filters
+
+# TODO #
+
+# Gaussian Mixture PHD Filter
 
 export
 	Measurement,
 	Dynamics,
 	GaussianMixture,
 	Spawn,
-	PHDFilter,
-	step,
-	prune,
-	step_prune,
-	multiple_target_state_extraction
-
-# Base Module Includes
+	PHDFilter
 include("classes.jl")
-include("PHDStep.jl")
+
+export
+	step,
+	step_prune
+include("phd_step.jl")
+
+export
+	prune
 include("prune.jl")
+
+export
+	multiple_target_state_extraction
 include("extraction.jl")
-
-# Export Module Contents
-#@reexport using GaussianFilters.YourSubmodule
-#@reexport using GaussianFilters.RubberDucks
-#@reexport using GaussianFilters.Classes
-#@reexport using GaussianFilters.PHDFilter
-
 
 end # module
