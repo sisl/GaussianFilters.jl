@@ -1,4 +1,3 @@
-### Measurement Model ###
 """
     Measurement(C,R)
 
@@ -10,7 +9,6 @@ mutable struct Measurement{a,b}
     R::Matrix{b}
 end
 
-### Dynamics Model ###
 """
     Dynamics(A,Q,d)
     Dynamics(A,Q)
@@ -24,7 +22,6 @@ mutable struct Dynamics{a,b,c}
     d::Vector{c}
 end
 
-## Constructors ##
 function Dynamics(A,Q)
     N = size(Q,1)
     return Dynamics(A,Q,zeros(N))
@@ -75,7 +72,7 @@ end
     Arguments:
     γ: Birth intensity
     spawn: Spawning intensity
-    dyn: Dynamics
+    dyn: Vector of possible Dynamics models
     meas: Measurements
     Ps: Survival probability
     Pd: Detection probability
@@ -84,9 +81,14 @@ end
 struct PHDFilter
     γ::GaussianMixture
     spawn::Spawn
-    dyn::Dynamics
+    dyn::Vector{Dynamics}
     meas::Measurement
     Ps::Float64
     Pd::Float64
     κ::Function
+end
+
+function PHDFilter(γ::GaussianMixture, spawn::Spawn, dyn::Dynamics,
+    meas::Measurement, Ps::Float64, Pd::Float64, κ::Function)
+    return PHDFilter(γ, spawn, [dyn], meas, Ps, Pd, κ)
 end

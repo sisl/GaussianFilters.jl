@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 """
     prune(x,T,U,J_max)
 
