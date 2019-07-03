@@ -4,7 +4,7 @@ using Random
 using Logging
 
 # Package Under Test
-using JuliaPackageTemplate
+using GaussianFilters
 
 # Set logging level
 global_logger(SimpleLogger(stderr, Logging.Debug))
@@ -40,12 +40,28 @@ end
 end
 
 # Define package tests
-@time @testset "JuliaPackageTemplate Package Tests" begin
+
+@time @testset "GaussianFilter Package Tests" begin
     testdir = joinpath(dirname(@__DIR__), "test")
-    @time @testset "JuliaPackageTemplate.YourSubmodule" begin
-        include(joinpath(testdir, "test_submodule.jl"))
+
+    @time @testset "GaussianFilter GM-PHD Testing" begin
+        include(joinpath(testdir, "test_gmphd.jl"))
+
     end
-    @time @testset "JuliaPackageTemplate.SingleSatellite" begin
-        include(joinpath(testdir, "test_rubberducks.jl"))
+
+     #= Future Tests
+
+    @time @testset "GaussianFilter KF Testing" begin
+        include(joinpath(testdir, "test_kf.jl"))
     end
+
+    @time @testset "GaussianFilter EKF Testing" begin
+        include(joinpath(testdir, "test_ekf.jl"))
+    end
+
+    @time @testset "GaussianFilter UKF Testing" begin
+        include(joinpath(testdir, "test_ukf.jl"))
+    end
+    =#
+
 end
