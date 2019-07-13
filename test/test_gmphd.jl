@@ -144,7 +144,7 @@ let
     array_isapprox(esf[4], [-313.933, -301.799, -3.09298, -1.9735], atol=0.002)
 end
 
-""" Arbitrary test for reference:
+#= Arbitrary test for reference:
 let
     # Here's an example of using the function array_isapprox
     array = [1.0 1.001 0.999]
@@ -175,4 +175,4 @@ let
     @test add_one(1) == 2
 end
 
-"""
+=#

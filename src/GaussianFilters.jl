@@ -9,7 +9,17 @@ import Base: step
 
 # Kalman, Extended Kalman, Unscented Kalman Filters
 
-# TODO #
+export
+	DynamicsModel,
+	LinearDynamicsModeal,
+	NonlinearDynamicsModel,
+	ObservationModel,
+	LinearObservationModel,
+	NonlinearObservationModel,
+	KalmanFilter,
+	ExtendedKalmanFilter,
+	UnscentedKalmanFilter,
+include("kf_classes.jl")
 
 # Gaussian Mixture PHD Filter
 
@@ -19,7 +29,7 @@ export
 	GaussianMixture,
 	Spawn,
 	PHDFilter
-include("classes.jl")
+include("gmphd_classes.jl")
 
 export
 	step,

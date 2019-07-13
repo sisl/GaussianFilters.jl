@@ -47,10 +47,7 @@ end
 
     @time @testset "GaussianFilter GM-PHD Testing" begin
         include(joinpath(testdir, "test_gmphd.jl"))
-
     end
-
-     #= Future Tests
 
     @time @testset "GaussianFilter KF Testing" begin
         include(joinpath(testdir, "test_kf.jl"))
@@ -63,6 +60,5 @@ end
     @time @testset "GaussianFilter UKF Testing" begin
         include(joinpath(testdir, "test_ukf.jl"))
     end
-    =#
 
 end
