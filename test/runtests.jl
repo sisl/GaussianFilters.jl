@@ -2,6 +2,7 @@
 using Test
 using Random
 using Logging
+using LinearAlgebra, Distributions
 
 # Package Under Test
 using GaussianFilters
