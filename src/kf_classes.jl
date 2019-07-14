@@ -36,7 +36,7 @@ end
     LinearObservationModel(C::Matrix,V::Symmetric)
     LinearObservationModel(C::Matrix,V::Matrix)
 
-Construct observation dynamics model with; transition matrix C,
+Construct linear observation dynamics model with; transition matrix C,
 control matrix B, and symmetric zero-mean measurement noise with
 symmetric covariance matrix V
 """
@@ -60,6 +60,38 @@ end
 function LinearObservationModel(C::Matrix, D::Matrix, V::Matrix)
     n = size(C,1)
     return LinearObservationModel(C,zeros(Bool,n,n),Symmetric(V))
+end
+
+"""
+    NonlinearDynamicsModel(f::Function,W::Symmetric)
+    NonlinearDynamicsModel(f::Function,W::Matrix)
+
+Construct nonlinear dynamics model with transition function f
+and symmetric zero-mean process noise with symmetric covariance matrix W
+"""
+mutable struct NonlinearDynamicsModel{c} <: DynamicsModel
+    f::Function
+    W::Symmetric{c}
+end
+
+function NonlinearDynamicsModel(f::Function, W::Matrix)
+    return NonlinearDynamicsModel(f,Symmetric(W))
+end
+
+"""
+    NonlinearObservationModel(h::Function,V::Symmetric)
+    NonlinearObservationModel(h::Function,V::Matrix)
+
+Construct nonlinear observation dynamics model with measurement function h
+and symmetric zero-mean measurement noise with symmetric covariance matrix V
+"""
+mutable struct NonlinearObservationModel{c} <: ObservationModel
+    h::Function
+    V::Symmetric{c}
+end
+
+function NonlinearObservationModel(h::Function, V::Matrix)
+    return NonlinearObservationModel(h,Symmetric(V))
 end
 
 """
@@ -92,10 +124,12 @@ end
     UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::Number,
         α::Float,β::Float)
     UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::Number)
+    UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel)
 
 Construct Unscented Kalman filter with DynamicsModel d, ObservationModel o,
 and UKF parameters λ, α, and β. Default constructor uses α/β formulation from
-Probabilistic Robotics, while second constructor reduces complexity.
+Probabilistic Robotics, second constructor reduces complexity, third
+constructor defaults λ to 2, as is commonly done.
 """
 mutable struct UnscentedKalmanFilter{a,b,c}
     d::DynamicsModel
@@ -109,4 +143,8 @@ end
 
 function UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::a) where a
     return UnscentedKalmanFilter{a,Int8,Int8}(d,o,λ,1,0)
+end
+
+function UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel)
+    return UnscentedKalmanFilter{Int8,Int8,Int8}(d,o,2,1,0)
 end
