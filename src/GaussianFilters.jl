@@ -16,10 +16,22 @@ export
 	ObservationModel,
 	LinearObservationModel,
 	NonlinearObservationModel,
+	AbstractFilter,
 	KalmanFilter,
 	ExtendedKalmanFilter,
 	UnscentedKalmanFilter,
+	GaussianBelief
 include("kf_classes.jl")
+
+export
+	update,
+	predict,
+	measure
+include("kf.jl")
+
+include("ekf.jl")
+
+include("ukf.jl")
 
 # Gaussian Mixture PHD Filter
 
@@ -43,5 +55,11 @@ include("prune.jl")
 export
 	multiple_target_state_extraction
 include("extraction.jl")
+
+# Utilities
+
+export
+	beliefEllipse
+include("utils.jl")
 
 end # module
