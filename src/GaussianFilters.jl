@@ -11,7 +11,7 @@ import Base: step
 
 export
 	DynamicsModel,
-	LinearDynamicsModeal,
+	LinearDynamicsModel,
 	NonlinearDynamicsModel,
 	ObservationModel,
 	LinearObservationModel,
@@ -26,7 +26,9 @@ include("kf_classes.jl")
 export
 	update,
 	predict,
-	measure
+	measure,
+	simulation,
+	simulate_step
 include("kf.jl")
 
 include("ekf.jl")

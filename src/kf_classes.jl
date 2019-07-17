@@ -20,13 +20,19 @@ Construct linear dynamics model with; transition matrix A,
 control matrix B, and symmetric zero-mean process noise with
 symmetric covariance matrix W
 """
-mutable struct LinearDynamicsModel{a<:Number,
-                b<:Number,c<:Number} <: DynamicsModel
+mutable struct LinearDynamicsModel{a<:Number, b<:Number,
+                c<:Number} <: DynamicsModel
     A::Matrix{a}
     B::Matrix{b}
     W::Symmetric{c}
-    LinearDynamicsModel(A,B,W) = (size(A,1) == size(B,1) == size(W,1)) ?
+    #=
+    function LinearDynamicsModel{a,b,c}(A::Matrix{a},B::Matrix{b},W::Symmetrix{c})
+        where{a<:Number,b<:Number,c<:Number}
+
+        (size(A,1) == size(B,1) == size(W,1)) ?
         new(A,B,W) : error("first dimensions not matching")
+    end
+    =#
 end
 
 function LinearDynamicsModel(A::Matrix, B::Matrix, W::Matrix)
@@ -47,8 +53,10 @@ mutable struct LinearObservationModel{a<:Number,b<:Number,c<:Number} <: Observat
     C::Matrix{a}
     D::Matrix{b}
     V::Symmetric{c}
+    #=
     LinearObservationModel(C,D,V) = (size(C,1) == size(D,1) == size(V,1)) ?
         new(C,D,V) : error("first dimensions not matching")
+    =#
 end
 
 function LinearObservationModel(C::Matrix, D::Matrix, V::Matrix)
@@ -60,7 +68,7 @@ function LinearObservationModel(C::Matrix, V::Symmetric)
     return LinearObservationModel(C,zeros(Bool,n,n),V)
 end
 
-function LinearObservationModel(C::Matrix, D::Matrix, V::Matrix)
+function LinearObservationModel(C::Matrix, V::Matrix)
     n = size(C,1)
     return LinearObservationModel(C,zeros(Bool,n,n),Symmetric(V))
 end
@@ -128,8 +136,9 @@ ObservationModel o.
 mutable struct ExtendedKalmanFilter <: AbstractFilter
     d::DynamicsModel
     o::ObservationModel
-    ExtendedKalmanFilter(d,o) = (d isa LinearDynamicsModel and o isa LinearObservationModel) ?
-        error("linear models: use kf over ekf"): new(d,o)
+    ExtendedKalmanFilter(d,o) =
+        (d isa LinearDynamicsModel && o isa LinearObservationModel) ?
+        error("linear models: use kf over ekf") : new(d,o)
 end
 
 """
@@ -149,11 +158,13 @@ mutable struct UnscentedKalmanFilter{a<:Number,b<:Number,c<:Number} <: AbstractF
     λ::a
     α::b
     β::c
-    UnscentedKalmanFilter(d,o,λ,α,β) = (d isa LinearDynamicsModel and o isa LinearObservationModel) ?
-        error("linear models: use kf over ukf"): new(d,o,λ,α,β)
+    #=
+    UnscentedKalmanFilter(d,o,λ,α,β) = (d isa LinearDynamicsModel && o isa LinearObservationModel) ?
+        error("linear models: use kf over ukf") : new(d,o,λ,α,β)
+    =#
 end
 
-function UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::a) where a
+function UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::a) where a<:Number
     return UnscentedKalmanFilter{a,Int8,Int8}(d,o,λ,1,0)
 end
 
@@ -173,8 +184,13 @@ and symmetric covariance matrix Σ
 mutable struct GaussianBelief{a<:Number,b<:Number}
     μ::Vector{a}
     Σ::Symmetric{b}
-    GaussianBelief(μ,Σ) = (size(μ,1) == size(Σ,1)) ?
+    #=
+    function GaussianBelief{a,b}(μ::Vector{a},
+        Σ::Symmetric{b}) where {a<:Number,b<:Number}
+        (size(μ,1) == size(Σ,1)) ?
         new(μ,Σ) : error("first dimensions not matching")
+    end
+    =#
 end
 
 function GaussianBelief(μ::Vector,Σ::Matrix)

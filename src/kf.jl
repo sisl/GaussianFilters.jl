@@ -1,8 +1,8 @@
 # Generic update function
 
 """
-update(b0::GaussianBelief, u::Vector, y::Vector, filter::AbstractFilter;
-    return_prediction = false)
+    update(b0::GaussianBelief, u::Vector, y::Vector, filter::AbstractFilter;
+        return_prediction = false)
 
 Uses AbstractFilter filter to update gaussian belief b0, given control vector
 u and measurement vector y. If return_preduction is set to true, update
@@ -10,8 +10,8 @@ also returns the predicted state (before the measurement update) as a second
 output
 """
 function update(b0::GaussianBelief, u::Vector{a}, y::Vector{b},
-                filter::AbstractFilter; return_prediction = false)
-                where {a<:Number, b<:Number}
+                filter::AbstractFilter;
+                return_prediction = false) where {a<:Number, b<:Number}
 
     # predict
     bp = predict(b0, u, filter)
@@ -19,19 +19,19 @@ function update(b0::GaussianBelief, u::Vector{a}, y::Vector{b},
     # measure
     bn = measure(bp, y, filter; u = u)
 
-    return_prediction ? return bp, bn : return bn
+    return return_prediction ? (bp, bn) : bn
 end
 
 # Kalman filter functions
 
 """
-predict(b0::GaussianBelief, u::Vector, filter::KalmanFilter)
+    predict(b0::GaussianBelief, u::Vector, filter::KalmanFilter)
 
 Uses Kalman filter to run prediction step on gaussian belief b0, given control
 vector u.
 """
-function predict(b0::GaussianBelief, u::Vector{a}, filter::KalmanFilter)
-                where a<:Number
+function predict(b0::GaussianBelief, u::Vector{a},
+            filter::KalmanFilter) where a<:Number
 
     # Motion update
     μp = filter.d.A * b0.μ + filter.d.B * u
@@ -40,18 +40,18 @@ function predict(b0::GaussianBelief, u::Vector{a}, filter::KalmanFilter)
 end
 
 """
-measure(bp::GaussianBelief, y::Vector, filter::KalmanFilter;
-    u::Vector = [false])
+    measure(bp::GaussianBelief, y::Vector, filter::KalmanFilter;
+        u::Vector = [false])
 
 Uses Kalman filter to run measurement update on predicted gaussian belief bp,
 given measurement vector y. If u is specified and filter.o.D has been declared,
 then matrix D will be factored into the y predictions
 """
 function measure(bp::GaussianBelief, y::Vector{a}, filter::KalmanFilter;
-                u::Vector{b} = [false]) where a<:Number
+                u::Vector{b} = [false]) where {a<:Number, b<:Number}
     # Kalman Gain
-    K = bp.Σ * filter.o.C'
-        * inv(filter.o.C * bp.Σ * filter.o.C'+V)
+    K = bp.Σ * filter.o.C' *
+        inv(filter.o.C * bp.Σ * filter.o.C'+V)
 
     # Predicted measurement
     yp = filter.o.C * bp.μ
@@ -69,4 +69,57 @@ function measure(bp::GaussianBelief, y::Vector{a}, filter::KalmanFilter;
     return GaussianBelief(μn, Σn)
 end
 
-### TODO: add in place update!, predict!, and measure! functions
+### Simulation functions ###
+
+"""
+    simulation(b0::GaussianBelief,action_sequence::Vector{Vector}},
+        filter::AbstractFilter)
+
+Run a simulation to get positions and measurements. Samples starting point from
+GaussianBelief b0, the runs action_sequence with additive gaussian noise all
+specified by AbstractFilter filter to return a simulated state and measurement
+history.
+"""
+function simulation(b0::GaussianBelief, action_sequence::Vector{Vector{a}},
+    filter::AbstractFilter) where a<:Number
+
+    # make initial state
+    s0 = b0.μ + cholesky(b0.Σ).L * randn(size(b0.Σ,1))
+
+    # simulate action sequence
+    state_history = [s0]
+    measurement_history = []
+    for u in action_sequence
+        xn, yn = simulate_step(state_history[end], u, filter)
+        push!(state_history, xn)
+        push!(measurement_history, xn)
+    end
+
+    ## TODO: Is it worth separating out start state from state_history
+    return state_history, measurement_history
+end
+
+"""
+    simulate_step(x::Vector, u::Vector, filter::KalmanFilter)
+
+Run a step of simulation starting at state x, taking action u, and using the
+motion and measurement equations specified by Kalman Filter filter.
+"""
+function simulate_step(x::Vector{a}, u::Vector{b},
+    filter::KalmanFilter) where {a<:Number, b<:Number}
+
+    # Linear Motion
+    xn = filter.d.A * x + filter.d.B * u +
+        cholesky(filter.d.W).L * randn(size(filter.d.W,1))
+
+    # Linear Measurement
+    yn = filter.o.C * xn +
+        cholesky(filter.o.V).L * randn(size(filter.o.V,1))
+    if !(filter.o.D[1,1] isa Bool)
+        yn += filter.o.D * u
+    end
+
+    return xn, yn
+end
+
+### TODO: add in-place update!, predict!, and measure! functions
