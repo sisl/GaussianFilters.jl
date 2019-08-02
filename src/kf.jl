@@ -122,4 +122,33 @@ function simulate_step(x::Vector{a}, u::Vector{b},
     return xn, yn
 end
 
+"""
+    run_filter(b0::GaussianBelief, action_history::Vector{Vector},
+            measurement_history::Vector{Vector}, filter::AbstractFilter)
+
+Given an initial belief b0, matched-size arrays for action and measurement
+histories and a filter, update the beliefs using the filter, and return a
+vector of all beliefs.
+"""
+
+function run_filter(b0::GaussianBelief, action_history::Vector{Vector},
+            measurement_history::Vector{Vector}, filter::AbstractFilter)
+
+        # assert matching action and measurement sizes
+        @assert length(action_history) == length(measurement_history)
+
+        # initialize belief vector
+        beliefs = [b0]
+
+        # iterate through and update beliefs
+        for (u, y) in zip(action_history, measurement_history)
+            bn = update(beliefs[end], u, y, filter)
+            push!(beliefs, bn)
+        end
+
+        return beliefs
+end
+
+
+
 ### TODO: add in-place update!, predict!, and measure! functions
