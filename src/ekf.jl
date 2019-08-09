@@ -28,8 +28,25 @@ function predict(b0::GaussianBelief, u::Vector{a},
             filter::ExtendedKalmanFilter) where a<:Number
 
     # Motion update
-    μp = filter.d.A * b0.μ + filter.d.B * u
-    Σp = filter.d.A * b0.Σ * filter.d.A' + filter.d.W
+
+    # Linear motion
+    if filter.d isa LinearDynamicsModel
+        μp = filter.d.A * b0.μ + filter.d.B * u
+        G = filter.d.A
+
+    # Nonlinear motion
+    elseif filter.d isa NonlinearDynamicsModel
+        μp = filter.d.f(b0.μ, u)
+
+        # Calculate jacobian with ForwardDiff.jl
+        G =
+
+    else
+        error("Unsupported EKF Dynamics Model Type: " *
+            string(typeof(filter.d)))
+    end
+
+    Σp = G * b0.Σ * G' + filter.d.W
     return GaussianBelief(μp, Σp)
 end
 
@@ -43,23 +60,45 @@ been declared, then matrix D will be factored into the y predictions.
 """
 function measure(bp::GaussianBelief, y::Vector{a}, filter::ExtendedKalmanFilter;
                 u::Vector{b} = [false]) where {a<:Number, b<:Number}
-    # Kalman Gain
-    K = bp.Σ * filter.o.C' *
-        inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
-
-    # Predicted measurement
-    yp = filter.o.C * bp.μ
-    if !(filter.o.D[1,1] isa Bool)
-        if u[1]==false
-            @warn "D matrix specified in measurement model but not being used"
-        else
-            yp = yp + filter.o.D * u
-        end
-    end
 
     # Measurement update
-    μn = bp.μ + K * (y-yp)
-    Σn = (I - K * filter.o.C) * bp.Σ
+
+    # Linear measurement
+    if filter.o isa LinearObservationModel
+
+        # Linear predicted measurement
+        yp = filter.o.C * bp.μ
+        if !(filter.o.D[1,1] isa Bool)
+            if u[1]==false
+                @warn "D matrix specified in measurement model but not being used"
+            else
+                yp = yp + filter.o.D * u
+            end
+        end
+
+        # Linear Jacobian
+        H = filter.o.C
+
+    # Nonlinear measurement
+    elseif filter.o isa NonlinearObservationModel
+
+        # Nonlinear predicted measurement
+        yp = filter.o.h(bp.μ, u)
+
+        # Nonlinear Jacobian calculated with ForwardDiff.jl
+        H =
+
+    else
+        error("Unsupported EKF Observation Model Type: " *
+            string(typeof(filter.o)))
+    end
+
+    # Kalman Gain
+    K = bp.Σ * H' * inv(H * bp.Σ * H' + filter.o.V)
+
+    # Measurement update
+    μn = bp.μ + K * (y - yp)
+    Σn = (I - K * H) * bp.Σ
     return GaussianBelief(μn, Σn)
 end
 
