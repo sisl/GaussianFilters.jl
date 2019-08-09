@@ -33,6 +33,10 @@ export
 	beautify
 include("kf.jl")
 
+export
+	predict,
+	measure,
+	simulate_step
 include("ekf.jl")
 
 include("ukf.jl")
