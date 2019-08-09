@@ -28,7 +28,9 @@ export
 	predict,
 	measure,
 	simulation,
-	simulate_step
+	simulate_step,
+	run_filter,
+	beautify
 include("kf.jl")
 
 include("ekf.jl")

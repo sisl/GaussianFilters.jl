@@ -51,7 +51,7 @@ function measure(bp::GaussianBelief, y::Vector{a}, filter::KalmanFilter;
                 u::Vector{b} = [false]) where {a<:Number, b<:Number}
     # Kalman Gain
     K = bp.Σ * filter.o.C' *
-        inv(filter.o.C * bp.Σ * filter.o.C'+V)
+        inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
 
     # Predicted measurement
     yp = filter.o.C * bp.μ
@@ -88,11 +88,11 @@ function simulation(b0::GaussianBelief, action_sequence::Vector{Vector{a}},
 
     # simulate action sequence
     state_history = [s0]
-    measurement_history = []
+    measurement_history = Vector{Vector{typeof(s0[1])}}()
     for u in action_sequence
         xn, yn = simulate_step(state_history[end], u, filter)
         push!(state_history, xn)
-        push!(measurement_history, xn)
+        push!(measurement_history, yn)
     end
 
     ## TODO: Is it worth separating out start state from state_history
@@ -130,9 +130,9 @@ Given an initial belief b0, matched-size arrays for action and measurement
 histories and a filter, update the beliefs using the filter, and return a
 vector of all beliefs.
 """
-
-function run_filter(b0::GaussianBelief, action_history::Vector{Vector},
-            measurement_history::Vector{Vector}, filter::AbstractFilter)
+function run_filter(b0::GaussianBelief, action_history::Vector{Vector{a}},
+            measurement_history::Vector{Vector{b}},
+            filter::AbstractFilter) where {a<:Number, b<:Number}
 
         # assert matching action and measurement sizes
         @assert length(action_history) == length(measurement_history)
@@ -149,6 +149,35 @@ function run_filter(b0::GaussianBelief, action_history::Vector{Vector},
         return beliefs
 end
 
+"""
+    beautify(belief_history::Vector{GaussianBelief};
+        dims::Vector{Int}=[])
 
+Given a history of beliefs, return a (time steps, state dim)-sized array of
+predicted means and a (time steps, state dim, state dim)-sized array of
+covariances. One can optionally specify dimensions indices dims to output
+reduced state information.
+"""
+function beautify(belief_history::Vector{GaussianBelief{a,b}};
+    dims::Vector{Int}=[]) where {a<:Number, b<:Number}
 
+    # set default to condense all dimensions
+    if length(dims) == 0
+        dims = collect(1:length(belief_history[1].μ))
+    end
+
+    # set output sizes
+    μ = zeros(typeof(belief_history[1].μ[1]),
+        length(belief_history), length(dims))
+    Σ = zeros(typeof(belief_history[1].μ[1]),
+        length(belief_history), length(dims), length(dims))
+
+    # iterate over belief_history and place elements appropriately
+    for (i, belief) in enumerate(belief_history)
+        μ[i,:] = belief.μ[dims]
+        Σ[i,:,:] = belief.Σ[dims,dims]
+    end
+
+    return μ, Σ
+end
 ### TODO: add in-place update!, predict!, and measure! functions
