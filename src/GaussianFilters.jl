@@ -1,15 +1,45 @@
 __precompile__(true)
 module GaussianFilters
 
-
 using LinearAlgebra
+using ForwardDiff
 using Random
 import Random: rand
 import Base: step
 
 # Kalman, Extended Kalman, Unscented Kalman Filters
 
-# TODO #
+export
+	DynamicsModel,
+	LinearDynamicsModel,
+	NonlinearDynamicsModel,
+	ObservationModel,
+	LinearObservationModel,
+	NonlinearObservationModel,
+	AbstractFilter,
+	KalmanFilter,
+	ExtendedKalmanFilter,
+	UnscentedKalmanFilter,
+	GaussianBelief
+include("kf_classes.jl")
+
+export
+	update,
+	predict,
+	measure,
+	simulation,
+	simulate_step,
+	run_filter,
+	beautify
+include("kf.jl")
+
+export
+	predict,
+	measure,
+	simulate_step
+include("ekf.jl")
+
+include("ukf.jl")
 
 # Gaussian Mixture PHD Filter
 
@@ -19,7 +49,7 @@ export
 	GaussianMixture,
 	Spawn,
 	PHDFilter
-include("classes.jl")
+include("gmphd_classes.jl")
 
 export
 	step,
@@ -33,5 +63,11 @@ include("prune.jl")
 export
 	multiple_target_state_extraction
 include("extraction.jl")
+
+# Utilities
+
+export
+	beliefEllipse
+include("utils.jl")
 
 end # module

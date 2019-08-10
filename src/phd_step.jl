@@ -38,7 +38,8 @@ function step(x::GaussianMixture, Z::Vector{Vector{T}}, PHD::PHDFilter) where T 
     n = length(x.μ[1])
     J_γ = PHD.γ.N
     J_β = PHD.spawn.β.N
-    tot = J_γ+J_β*J_k+J_k
+    J_dyn = length(PHD.dyn)
+    tot = J_γ + J_β*J_k + J_k*J_dyn
     w_p = [0.0 for i in 1:tot]
     μ_p = [zeros(n) for i in 1:tot]
     Σ_p = [zeros(n,n) for i in 1:tot]
@@ -63,10 +64,12 @@ function step(x::GaussianMixture, Z::Vector{Vector{T}}, PHD::PHDFilter) where T 
 
     # 2. Prediction for existing targets
     for j in 1:J_k
-        i += 1
-        w_p[i] = PHD.Ps*x.w[j]
-        μ_p[i] =  PHD.dyn.A*x.μ[j]
-        Σ_p[i] = PHD.dyn.Q + PHD.dyn.A*x.Σ[j]*PHD.dyn.A'
+        for k in 1:J_dyn
+            i += 1
+            w_p[i] = PHD.Ps*x.w[j]
+            μ_p[i] = PHD.dyn[k].A*x.μ[j]
+            Σ_p[i] = PHD.dyn[k].Q + PHD.dyn[k].A*x.Σ[j]*PHD.dyn[k].A'
+        end
     end
     @assert i == tot "Poor Indexing"
     x_p = GaussianMixture(w_p, μ_p, Σ_p)
