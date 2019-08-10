@@ -159,7 +159,7 @@ covariances. One can optionally specify dimensions indices dims to output
 reduced state information.
 """
 function beautify(belief_history::Vector{GaussianBelief{a,b}};
-    dims::Vector{Int}=[]) where {a<:Number, b<:Number}
+    dims::Vector{Int}=Vector{Int}()) where {a<:Number, b<:Number}
 
     # set default to condense all dimensions
     if length(dims) == 0

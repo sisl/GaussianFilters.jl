@@ -1,21 +1,3 @@
-"""
-    Work into extended Kalman update, separate by predict, measure,
-    update where update = predict, measure, use autodiff to compute G and H
-"""
-
-function ExtendedKalmanUpdate(μ, Σ, u, y, g, h, W, V;dt=0.001)
-    μ_pred = g(μ, u;dt=dt)
-    # G = dg/dmu
-    Σ_pred = G*Σ*G' + W
-
-    # H = dh/dmu
-    K = Σ_pred*H'*inv(H*Σ_pred*H'+V)
-    μ = μ_pred + K*(y-h(μ_pred))
-    Σ = (I - K*H)*Σ_pred
-    return μ, Σ
-end
-
-
 # Extended Kalman filter functions
 
 """
@@ -32,21 +14,23 @@ function predict(b0::GaussianBelief, u::Vector{a},
     # Linear motion
     if filter.d isa LinearDynamicsModel
         μp = filter.d.A * b0.μ + filter.d.B * u
-        G = filter.d.A
+        F = filter.d.A
 
     # Nonlinear motion
     elseif filter.d isa NonlinearDynamicsModel
+
+        # Nonlinear predicted motion
         μp = filter.d.f(b0.μ, u)
 
-        # Calculate jacobian with ForwardDiff.jl
-        G =
+        # Nonlinear Jacobian calculated with ForwardDiff.jl
+        F = ForwardDiff.jacobian(μ -> filter.d.f(μ, u), b0.μ)
 
     else
         error("Unsupported EKF Dynamics Model Type: " *
             string(typeof(filter.d)))
     end
 
-    Σp = G * b0.Σ * G' + filter.d.W
+    Σp = F * b0.Σ * F' + filter.d.W
     return GaussianBelief(μp, Σp)
 end
 
@@ -86,7 +70,7 @@ function measure(bp::GaussianBelief, y::Vector{a}, filter::ExtendedKalmanFilter;
         yp = filter.o.h(bp.μ, u)
 
         # Nonlinear Jacobian calculated with ForwardDiff.jl
-        H =
+        H = ForwardDiff.jacobian(μ -> filter.o.h(μ, u), bp.μ)
 
     else
         error("Unsupported EKF Observation Model Type: " *

@@ -1,8 +1,8 @@
 __precompile__(true)
 module GaussianFilters
 
-
 using LinearAlgebra
+using ForwardDiff
 using Random
 import Random: rand
 import Base: step
