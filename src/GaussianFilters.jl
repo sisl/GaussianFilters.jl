@@ -39,6 +39,12 @@ export
 	simulate_step
 include("ekf.jl")
 
+export
+	unscented_transform,
+	unscented_transform_inverse,
+	predict,
+	measure,
+	simulate_step
 include("ukf.jl")
 
 # Gaussian Mixture PHD Filter
@@ -63,6 +69,8 @@ include("prune.jl")
 export
 	multiple_target_state_extraction
 include("extraction.jl")
+
+# TODO: Add Labeled Multi-Bernoulli Filter
 
 # Utilities
 

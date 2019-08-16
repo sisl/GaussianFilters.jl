@@ -1,84 +1,234 @@
-"""
-Unscented Transform
+# Sigma point transform functions
 
-Convert a single mean and covariance to set of 2n+1 sigma points
-with n being the dimensionality of the state space.
+"""
+unscented_transform(b::GaussianBelief, λ::Int=2, α::Number=1,
+    β::Number=0; decomp_method::String = "cholesky")
+
+Convert a single GaussianBelief (mean and covariance) to set of 2n+1 sigma
+points, with n being the dimensionality of the state space. Return an array of
+the points, and arrays for weights used in mean and covariance calculations.
 Uses formulation from ProbRob for α/β parameters on a separate covariance
 weighting, although this is not necessary.
 
 """
-function UT(μ, Σ, λ=2, α=1, β=0)
-    n = length(μ)
+function unscented_transform(b::GaussianBelief, λ::Number=2, α::Number=1,
+    β::Number=0; decomp_method::String = "cholesky")
+
+    # compute state space dimensionality
+    n = length(b.μ)
 
     # compute weights
-    w_m = 1/(2.0*(n+λ))*ones(2*n+1,1)
-    w_m[1] = λ/(λ+n)
-    w_c = copy(w_m)
-    w_c[1] += (1 - α^2 + β) # Per ProbRob formulation
+    w_μ = 1/(2.0*(n+λ))*ones(2*n+1)
+    w_μ[1] = λ/(λ+n)
+    w_Σ = copy(w_μ)
+    w_Σ[1] += (1 - α^2 + β) # Per ProbRob formulation
 
-    s = cholesky(Σ).L
-    points = zeros(n,2*n+1)
-    points[:,1] = μ
-    for i in 1:n
-        points[:,2*i] = μ + sqrt(n+λ)*s[:,i]
-        points[:,2*i+1] = μ - sqrt(n+λ)*s[:,i]
+    # compute Σ^0.5 using different methods
+    if decomp_method == "cholesky" # default
+        s = cholesky(b.Σ).L
+    elseif decomp_method == "unit-axes"
+        # TODO: SVD decomp method
+        error("Unit axes method not yet implemented.")
+    elseif decomp_method == "tilt-axes"
+        # TODO: SVD decomp method with tilt transformation
+        error("Tilt axes method not yet implemented.")
+    else
+        error("Undefined unscented transform Σ sqrt.")
     end
 
-    return points, w_m, w_c
+    # compute sigma points
+    points = []
+    push!(points,b.μ)
+    for i in 1:n
+        push!(points, b.μ + sqrt(n+λ)*s[:,i])
+        push!(points, b.μ - sqrt(n+λ)*s[:,i])
+    end
+
+    return points, w_μ, w_Σ
 end
 
 """
-Inverse Unscented Transform
+    unscented_transform_inverse(points::Vector{Vector}, w_μ::Vector,
+        w_Σ::Vector)
 
 Convert a 2n+1 sigma points and weights back to a single measure for
-mean and covariance.
+mean and covariance (GaussianBelief).
 
 Uses formulation from ProbRob for α/β parameters on a separate covariance
 weighting, although this is not necessary.
 
 """
-function invUT(points, w_m, w_c)
-    μ = points*w_m
-    diff = points .- μ
-    scaled = diff.*sqrt.(w_c)'
-    Σ = scaled*scaled'
+function unscented_transform_inverse(points::Vector{Vector{a}}, w_μ::Vector{b},
+    w_Σ::Vector{c}) where {a<:Number, b<:Number, c<:Number}
 
-    return μ, Σ
+    # calculate weighted mean
+    μ = sum(points .* w_μ)
+
+    # calculated weighted covariance
+    diff = hcat(points...) .- μ
+    scaled = diff .* sqrt.(w_Σ)'
+    Σ = scaled * scaled'
+
+    return GaussianBelief(μ, Σ)
+end
+
+# Unscented Kalman Filter functions
+
+"""
+    predict(b0::GaussianBelief, u::Vector, filter::UnscentedKalmanFilter)
+
+Uses Unscented Kalman filter to run prediction step on gaussian belief b0,
+given control vector u.
+"""
+function predict(b0::GaussianBelief, u::Vector{a},
+            filter::UnscentedKalmanFilter) where a<:Number
+
+    # Motion update
+
+    n = length(b0.μ)
+
+    # approximate Gaussian belief with sigma points
+    points, w_μ, w_Σ = unscented_transform(b0, filter.λ, filter.α, filter.β)
+
+    # iterate over each sigma point and propagate it through motion function
+    pointsp = Vector{Vector{Number}}()
+    for point in points
+
+        # Linear motion
+        if filter.d isa LinearDynamicsModel
+            push!(pointsp, filter.d.A * point + filter.d.B * u)
+
+        # Nonlinear motion
+        elseif filter.d isa NonlinearDynamicsModel
+
+            # Nonlinear predicted motion
+            push!(pointsp, filter.d.f(point, u))
+
+        else
+            error("Unsupported EKF Dynamics Model Type: " *
+                string(typeof(filter.d)))
+        end
+    end
+
+    # apply inverse unscented transform to approximate new Gaussian
+    bp = unscented_transform_inverse(pointsp, w_μ, w_Σ)
+
+    # add process noise
+    Σp = bp.Σ + filter.d.W
+
+    return GaussianBelief(bp.μ, Σp)
 end
 
 """
-Unscented Kalman Update
+    measure(bp::GaussianBelief, y::Vector, filter::UnscentedKalmanFilter;
+        u::Vector = [false])
 
-Rework into separate predict and measure functions, with update=predict+measure
+Uses Unscented Kalman filter to run measurement update on predicted gaussian
+belief bp, given measurement vector y. If u is specified and filter.o.D has
+been declared, then matrix D will be factored into the y predictions.
 """
-function UnscentedKalmanUpdate(μ, Σ, u, y, g, h, W, V ;dt=0.001)
-    n = length(μ)
+function measure(bp::GaussianBelief, y::Vector{a}, filter::UnscentedKalmanFilter;
+                u::Vector{b} = [false]) where {a<:Number, b<:Number}
 
-    # predict
-    points, w_m, w_c = UT(μ,Σ)
-    pointsp = zeros(size(points))
-    for i in 1:(2*n+1)
-        pointsp[:,i] = g(points[:,i], u;dt=dt)
+    # Measurement update
+
+    # approximate Gaussian belief with sigma points
+    points, w_μ, w_Σ = unscented_transform(bp, filter.λ, filter.α, filter.β)
+
+    # iterate over sigma points and computed expected measurement
+    ysp = Vector{Vector{Number}}()
+    for point in points
+
+        # Linear measurement
+        if filter.o isa LinearObservationModel
+
+            # Linear predicted measurement
+            yp = filter.o.C * point
+            if !(filter.o.D[1,1] isa Bool)
+                if u[1]==false
+                    @warn "D matrix specified in measurement model but not being used"
+                else
+                    yp = yp + filter.o.D * u
+                end
+            end
+            push!(ysp, yp)
+
+        # Nonlinear measurement
+        elseif filter.o isa NonlinearObservationModel
+
+            # Nonlinear predicted measurement
+            push!(ysp,filter.o.h(point, u))
+
+        else
+            error("Unsupported EKF Observation Model Type: " *
+                string(typeof(filter.o)))
+        end
+
     end
-    μ_pred, Σb_pred = invUT(pointsp, w_m, w_c)
-    Σ_pred = Σb_pred + W
 
-    # update
-    points, w_m, w_c = UT(μ_pred,Σ_pred)
-    y_preds = zeros(length(y),(2*n+1))
-    for i in 1:(2*n+1)
-        y_preds[:,i] = h(points[:,i])
+    # compute expected measurement
+    yp = sum(ysp .* w_μ)
+
+    # compute marginal covariance components
+    ydiff = hcat(ysp...) .- yp
+    scaled_ydiff = ydiff .* sqrt.(w_Σ)'
+    Σ_Y = scaled_ydiff * scaled_ydiff' + filter.o.V
+
+    xdiff = hcat(points...) .- bp.μ
+    scaled_xdiff = xdiff .* sqrt.(w_Σ)'
+    Σ_XY = scaled_xdiff * scaled_ydiff'
+
+    # measurement update
+    μn = bp.μ + Σ_XY * inv(Σ_Y) * (y - yp)
+    Σn = bp.Σ - Σ_XY * inv(Σ_Y) * Σ_XY'
+    return GaussianBelief(μn, Σn)
+end
+
+### Simulation function ###
+"""
+    simulate_step(x::Vector, u::Vector, filter::UnscentedKalmanFilter)
+
+Run a step of simulation starting at state x, taking action u, and using the
+motion and measurement equations specified by Kalman Filter filter.
+"""
+function simulate_step(x::Vector{a}, u::Vector{b},
+    filter::UnscentedKalmanFilter) where {a<:Number, b<:Number}
+
+    # Motion
+
+    xn = cholesky(filter.d.W).L * randn(size(filter.d.W,1))
+
+    # Linear Motion
+    if filter.d isa LinearDynamicsModel
+        xn += filter.d.A * x + filter.d.B * u
+
+    # Nonlinear Motion
+    elseif filter.d isa NonlinearDynamicsModel
+        xn += filter.d.f(x,u)
+
+    else
+        error("Unsupported UKF Dynamics Model Type: " *
+            string(typeof(filter.d)))
     end
-    y_pred = y_preds*w_m
 
-    scaled_ydiff = (y_preds .- y_pred).*sqrt.(w_c)'
-    Σ_Y = scaled_ydiff*scaled_ydiff' + V
+    # Measurement
 
-    scaled_xdiff = (points .- μ_pred).*sqrt.(w_c)'
-    Σ_XY = scaled_xdiff*scaled_ydiff'
+    yn = cholesky(filter.o.V).L * randn(size(filter.o.V,1))
 
-    μ = μ_pred + Σ_XY*inv(Σ_Y)*(y-y_pred)
-    Σ = Σ_pred - Σ_XY*inv(Σ_Y)*Σ_XY'
-    Σ = Symmetric(Σ)
-    return μ, Σ
+    # Linear Measurement
+    if filter.o isa LinearObservationModel
+        yn += filter.o.C * xn
+        if !(filter.o.D[1,1] isa Bool)
+            yn += filter.o.D * u
+        end
+
+    # Nonlinear Measurement
+    elseif filter.o isa NonlinearObservationModel
+        yn += filter.o.h(xn,u)
+    else
+        error("Unsupported UKF Observation Model Type: " *
+            string(typeof(filter.o)))
+    end
+
+    return xn, yn
 end
