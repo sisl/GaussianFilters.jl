@@ -11,7 +11,7 @@ Uses formulation from ProbRob for α/β parameters on a separate covariance
 weighting, although this is not necessary.
 
 """
-function unscented_transform(b::GaussianBelief, λ::Int=2, α::Number=1,
+function unscented_transform(b::GaussianBelief, λ::Number=2, α::Number=1,
     β::Number=0; decomp_method::String = "cholesky")
 
     # compute state space dimensionality
@@ -20,16 +20,16 @@ function unscented_transform(b::GaussianBelief, λ::Int=2, α::Number=1,
     # compute weights
     w_μ = 1/(2.0*(n+λ))*ones(2*n+1)
     w_μ[1] = λ/(λ+n)
-    w_Σ = copy(w_m)
+    w_Σ = copy(w_μ)
     w_Σ[1] += (1 - α^2 + β) # Per ProbRob formulation
 
     # compute Σ^0.5 using different methods
     if decomp_method == "cholesky" # default
         s = cholesky(b.Σ).L
-    else if decomp_method == "unit-axes"
+    elseif decomp_method == "unit-axes"
         # TODO: SVD decomp method
         error("Unit axes method not yet implemented.")
-    else if decomp_method == "tilt-axes"
+    elseif decomp_method == "tilt-axes"
         # TODO: SVD decomp method with tilt transformation
         error("Tilt axes method not yet implemented.")
     else
@@ -48,7 +48,8 @@ function unscented_transform(b::GaussianBelief, λ::Int=2, α::Number=1,
 end
 
 """
-    unscented_transform_inverse(points::Array{Array}, w_μ::Array, w_Σ::Array)
+    unscented_transform_inverse(points::Vector{Vector}, w_μ::Vector,
+        w_Σ::Vector)
 
 Convert a 2n+1 sigma points and weights back to a single measure for
 mean and covariance (GaussianBelief).
@@ -57,8 +58,8 @@ Uses formulation from ProbRob for α/β parameters on a separate covariance
 weighting, although this is not necessary.
 
 """
-function unscented_transform_inverse(points::Array{Array{a}}, w_m::Array{b},
-    w_Σ::Array{c}) where {a<:Number, b<:Number, c<:Number}
+function unscented_transform_inverse(points::Vector{Vector{a}}, w_μ::Vector{b},
+    w_Σ::Vector{c}) where {a<:Number, b<:Number, c<:Number}
 
     # calculate weighted mean
     μ = sum(points .* w_μ)
@@ -90,7 +91,7 @@ function predict(b0::GaussianBelief, u::Vector{a},
     points, w_μ, w_Σ = unscented_transform(b0, filter.λ, filter.α, filter.β)
 
     # iterate over each sigma point and propagate it through motion function
-    pointsp = []
+    pointsp = Vector{Vector{Number}}()
     for point in points
 
         # Linear motion
@@ -110,7 +111,7 @@ function predict(b0::GaussianBelief, u::Vector{a},
     end
 
     # apply inverse unscented transform to approximate new Gaussian
-    bp = unscented_transform_inverse(points_pred, w_μ, w_Σ)
+    bp = unscented_transform_inverse(pointsp, w_μ, w_Σ)
 
     # add process noise
     Σp = bp.Σ + filter.d.W
@@ -132,10 +133,10 @@ function measure(bp::GaussianBelief, y::Vector{a}, filter::UnscentedKalmanFilter
     # Measurement update
 
     # approximate Gaussian belief with sigma points
-    points, w_μ, w_Σ = unscented_transform(b0, filter.λ, filter.α, filter.β)
+    points, w_μ, w_Σ = unscented_transform(bp, filter.λ, filter.α, filter.β)
 
     # iterate over sigma points and computed expected measurement
-    ysp = []
+    ysp = Vector{Vector{Number}}()
     for point in points
 
         # Linear measurement
@@ -178,7 +179,7 @@ function measure(bp::GaussianBelief, y::Vector{a}, filter::UnscentedKalmanFilter
     Σ_XY = scaled_xdiff * scaled_ydiff'
 
     # measurement update
-    μn = bp.μ + Σ_XY * inv(Σ_Y) * (y - y_pred)
+    μn = bp.μ + Σ_XY * inv(Σ_Y) * (y - yp)
     Σn = bp.Σ - Σ_XY * inv(Σ_Y) * Σ_XY'
     return GaussianBelief(μn, Σn)
 end
