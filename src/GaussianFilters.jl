@@ -30,21 +30,13 @@ export
 	simulation,
 	simulate_step,
 	run_filter,
-	beautify
+	unpack
 include("kf.jl")
-
-export
-	predict,
-	measure,
-	simulate_step
 include("ekf.jl")
 
 export
 	unscented_transform,
-	unscented_transform_inverse,
-	predict,
-	measure,
-	simulate_step
+	unscented_transform_inverse
 include("ukf.jl")
 
 # Gaussian Mixture PHD Filter
