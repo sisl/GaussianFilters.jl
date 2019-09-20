@@ -1,110 +1,61 @@
-| Testing | Coverage | Documentation |
-| :-----: | :------: | :-----------: |
-| [![Build Status](https://travis-ci.org/sisl/JuliaPackageTemplate.jl.svg?branch=master)](https://travis-ci.org/sisl/JuliaPackageTemplate.jl) | [![Coverage Status](https://coveralls.io/repos/github/sisl/JuliaPackageTemplate.jl/badge.svg?branch=master)](https://coveralls.io/github/sisl/JuliaPackageTemplate.jl?branch=master) | [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sisl.github.io/JuliaPackageTemplate.jl/latest) |
+| Testing  | Documentation |
+| :-----:  | :-----------: |
+| [![Build Status](https://travis-ci.org/sisl/GaussianFilters.jl.svg?branch=master)](https://travis-ci.org/sisl/GaussianFilters.jl) |  [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sisl.github.io/GaussianFilters.jl/latest) |
 
-# JuliaPackageTemplate.jl
-JuliaPackageTemplate provides an example Julia project template to quickly setup
-continuous integration, test coverage reports, and automatic documentation deployment.
+# GaussianFilters.jl
+
+GaussianFilters implements methods to define and run **Kalman**, **Extended Kalman**, **Unscented Kalman**, and **Gaussian-Mixture Probabilistic Hypothesis Density** Filters on simulated data. It also implements simulation functions for the Kalman-class filters.
 
 ## Documentation
 
-The documentation for the package can be found here: <https://sisl.github.io/JuliaPackageTemplate.jl/latest>
+The documentation for the package can be found here: <https://sisl.github.io/GaussianFilters.jl/latest>
 
-More example code and examples will be added as time permits.
+## Installation
 
-## Configuring Package Name
+GaussianFilters is not yet a registered Julia package. In the meantime it can be installed by running:
 
-To start off with, look through the package and replace `JuliaPackageTemplate` 
-with your own project name.
-
-`deps` contains C/C++ file dependencies of the packages which are compiled when
-the package is installed by using the BinDeps.jl package.
-
-`docs` contains
-
-`src` contains the Julia source code of the package.
-
-`test` contains unit tests which can be run locally
-
-Also be sure to update the project UUID in `Project.toml`!
-
-## Testing Locally
-
-It is possible to test the package and code locally before commiting the update
-and triggering a CI build. 
-
-First, open a terminal window and navigate to the package root directory and 
-start Julia
-
-```bash
-deddy@Andromeda:~$ cd /Stanford/repos/JuliaPackageTemplate.jl
-deddy@Andromeda:~/Stanford/repos/JuliaPackageTemplate.jl$ julia
-julia>
-```
-
-Next, activate the local package development environment 
 ```julia
-julia> ]
-(v1.0) pkg> activate .
-(JuliaPackageTemplate) pkg> 
+using Pkg
+Pkg.add(PackageSpec(url="https://github.com/sisl/GaussianFilters.jl"))
 ```
 
-From here we can test the package by simply typing in the `test` command:
+## Basic Usage
+
+Basic usage follows along defining appropriate models, constructing an appropriate filter, and running the filter with known actions on some measurement data.
+
 ```julia
-(JuliaPackageTemplate) pkg> test
+using GaussianFilters
+
+# dynamics model
+A = [1 0.1; 0 1]
+B = [0; 1]
+W = [0.5 0; 0 0.5]
+dmodel = LinearDynamicsModel(A, B, W)
+
+# measurement model
+measure(x, u) = norm(x, 2)
+V = [0.01]
+omodel = NonlinearObservationModel(measure, V)
+
+# filtering given some action and measurement
+ukf = UnscentedKalmanFilter(dmodel, omodel)
+
+b0 = GaussianBelief([0, 0], [1 0; 0 1])
+b1 = update(b0, action, measurement, ukf)
 ```
 
-If the package depends on C/C++ source files, these first must be compiled before
-testing the package. In which case testing would involve two commands:
-```julia
-(JuliaPackageTemplate) pkg> build
-(JuliaPackageTemplate) pkg> test
-```
+See documentation and examples for more details.
 
-## Setting Up Continuous Integration
+## Examples
 
-To setup continuous integration for the package we will use Travis-CI. Travis is 
-free to use for open source projects (Thank you Travis!), or for build of private
-repositories a subscription can be purchased.
+Examples notebooks can be found in the `notebooks` folder:
 
-To setup continuous integration your repository must contain a `.travis.yml` file 
-AND continuous integration must be enabled for your repository on the TRAVIS CI 
-webpage. This can be done either for your presonal repositories here:
+[Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/KF_2DMotionExample.ipynb)
 
-`https://travis-ci.org/account/repositories`
+[Extended Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/EKF_SpinningSatelliteExample.ipynb)
 
-or for your organizations' repositories here:
+[Unscented Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/UKF_NonholonomicRobot.ipynb)
 
-https://travis-ci.org/organizations/YOUR_GITHUB_ORGANIZATION_NAME/repositories
+[GM-PHD Object Surveillance Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/GMPHD_SurveillanceExample.ipynb)
 
-Note: If the project does not appear immediately, you may need to hit the "sync
-repositories" button to have it appear.
-
-## Setting Up Test Coverage
-
-To set up test coverage, go to [coveralls.io](https://coveralls.io/repos/new),
-login with your github account, and activate the project to add coverage reports.
-
-Note: If the project does not appear immediately, you may need to hit the "sync
-repositories" button to have it appear.
-
-## Setting Up Documentation Deployment
-
-If you have not done so, set up github pages by adding a pages repository to your
-github account by following the [setup instructions](https://pages.github.com/) or just add an empty repository
-named `username.github.io` or `orgname.github.io` to your personal or organization account. This repository can be private.
-
-Documentation and documentation deployment is accomplished with the Julia packager
-`Documenter.jl`
-
-To setup the automated deployment of documentation as part of the CI build process
-follow the [Deploy Instructions](https://juliadocs.github.io/Documenter.jl/stable/man/hosting/).
-
-This involves two steps:
-1. Adding a deploy key to the github deploy keys to allow travis CI to push to new pages to the repository.
-2. Adding an environment variable to your Travis CI build settings with the deployment keys.
-
-## Adding package to Julia Package Repository
-
-To add a package to the Julia package repository it is currently easiest to use 
-[Attobot](https://github.com/attobot/attobot)
+[GM-PHD Aircraft Carrier Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/GMPHD_AircraftCarrierExample.ipynb)
