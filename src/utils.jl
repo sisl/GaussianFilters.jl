@@ -1,12 +1,11 @@
 """
-    beliefEllipse(b::GaussianBelief, P::Float=0.95; δ::Number=5)
+    belief_ellipse(b::GaussianBelief, P::Float=0.95; δ::Number=5)
 
 Construct and return the x and y points of a 2D gaussian belief,
 with P being the total probability captured by the ellipse (P ∈ (0,1)),
 and δ the degree increment between points.
 """
-
-function beliefEllipse(b::GaussianBelief, P::Number=0.95; δ::Number=5)
+function belief_ellipse(b::GaussianBelief, P::Number=0.95; δ::Number=5)
     @assert 0<P<1
     @assert 0<δ<360
 
@@ -22,14 +21,14 @@ function beliefEllipse(b::GaussianBelief, P::Number=0.95; δ::Number=5)
 end
 
 """
-    beliefEllipse(μ::Vector, Σ::Matrix, P::Float=0.95; δ::Number=5)
+    belief_ellipse(μ::Vector, Σ::Matrix, P::Float=0.95; δ::Number=5)
 
 Construct and return the x and y points of a 2D gaussian belief,
 with P being the total probability captured by the ellipse (P ∈ (0,1)),
 and δ the degree increment between points.
 """
 
-function beliefEllipse(μ::Vector, Σ::Matrix, P::Number=0.95; δ::Number=5)
+function belief_ellipse(μ::Vector, Σ::Matrix, P::Number=0.95; δ::Number=5)
     @assert 0<P<1
     @assert 0<δ<360
 

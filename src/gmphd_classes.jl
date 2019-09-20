@@ -1,5 +1,5 @@
 """
-    Measurement(C,R)
+    Measurement(C::Matrix, R::Matrix)
 
 Construct measurement model with observation matrix C and sensor
 noise matrix R
@@ -10,8 +10,8 @@ mutable struct Measurement{a,b}
 end
 
 """
-    Dynamics(A,Q,d)
-    Dynamics(A,Q)
+    Dynamics(A::Matrix, Q::Matrix, d::Vector)
+    Dynamics(A::Matrix, Q::Matrix)
 
 Construct linear dynamics model with; transition matrix A,
 process noise matrix Q and offset vector d
@@ -28,7 +28,9 @@ function Dynamics(A,Q)
 end
 
 """
-    GaussianMixture(N, w, μ, Σ)
+    GaussianMixture(N::Int64, w::Vector{Float64}, μ::Vector{Vector},
+        Σ::Vector{Matrix})
+    GaussianMixture(w::Vector{Float64}, μ::Vector{Vector}, Σ::Vector{Matrix})
 
     Arguments:
     N: Number of models
@@ -36,7 +38,6 @@ end
     μ: Means of the model
     Σ: Covariances of the model
 """
-
 struct GaussianMixture{T<:Number}
     N::Int64
     w::Vector{Float64}
@@ -51,21 +52,23 @@ function GaussianMixture(w, μ::Vector{Vector{T}}, Σ::Vector{Matrix{K}}) where 
 end
 
 """
-    Spawn(β, dyn)
+    Spawn(β::GaussianMixture, dyn::Vector{Dynamics})
 
     Arguments:
     β: Gaussian Mixture model determining the
     spawning intesity of the target
     dyn: Dynamics
 """
-
 struct Spawn
     β::GaussianMixture
     dyn::Vector{Dynamics}
 end
 
 """
-    PHDFilter(γ, spawn, dyn, meas, Ps, Pd)
+    PHDFilter(γ::GaussianMixture, spawn::Spawn, dyn::Vector{Dynamics},
+        meas::Measurement, Ps::Float64, Pd::Float64, κ::Function)
+    PHDFilter(γ::GaussianMixture, spawn::Spawn, dyn::Dynamics,
+        meas::Measurement, Ps::Float64, Pd::Float64, κ::Function)
 
     Sets up a PHD Filter
 
@@ -77,7 +80,6 @@ end
     Ps: Survival probability
     Pd: Detection probability
 """
-
 struct PHDFilter
     γ::GaussianMixture
     spawn::Spawn

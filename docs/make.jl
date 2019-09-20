@@ -1,37 +1,32 @@
-using Documenter, JuliaPackageTemplate
-
-#
-include("src/makeplots.jl")
+using Documenter, GaussianFilters
 
 # This function builds the documentation
 makedocs(
-    modules   = [JuliaPackageTemplate],
-    doctest   = false,
-    clean     = true,
-    linkcheck = false,
-    format    = Documenter.HTML(),
-    sitename  = "JuliaPackageTemplate.jl",
-    authors   = "Duncan Eddy",
-    pages     = Any[
-        "Home" => "index.md",
-        "Modules" => Any[
-            "modules/submodule.md", # Use default module name in sidebar
-            "Rubber Ducks" => "modules/rubber_ducks.md", # Rename a module in sidebar
-        ],
-        "Examples" => Any[
-            "Plotting Example" => "examples/plotting_example.md"
-        ],
-        "Library Index" => "library_index.md",
-    ]
-)
+    modules   = [GaussianFilters],
+    #doctest   = false,
+    #clean     = true,
+    #linkcheck = false,
+    format    = :html,
+    sitename  = "GaussianFilters",
+    pages     = ["Introduction" => [
+                    "Basics" => "index.md",
+                    "Installation" => "install.md"
+                    ],
+                "User Documentation" => [
+                    "Kalman-class Filters" => "kalman.md",
+                    "GM-PHD Filter" => "gmphd.md"
+                    ]
+                ])
 
 # Generate plots
 # Note: Must be called after makedocs so the build folder are created
-makeplots()
+# makeplots()
 
+#=
 deploydocs(
-    repo = "github.com/sisl/JuliaPackageTemplate.jl",
+    repo = "github.com/sisl/GaussianFilters.jl",
     devbranch = "master",
     devurl = "latest",
-    deps = makeplots,
+    deps = ,
 )
+=#

@@ -67,7 +67,7 @@ include("extraction.jl")
 # Utilities
 
 export
-	beliefEllipse
+	belief_ellipse
 include("utils.jl")
 
 end # module
