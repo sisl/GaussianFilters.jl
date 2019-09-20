@@ -19,8 +19,16 @@ matrix:
     - julia: 1.1
     - julia: nightly
 
-script:
-  - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build(); Pkg.test("GaussianFilters"; coverage=true)'
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.0
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                               Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
 
 # After successfuly build submit coverage report and deploy updated documentation
 # But limit deployment to the linux worker so this is done only once.
