@@ -1,6 +1,6 @@
-| Testing  | Documentation |
-| :-----:  | :-----------: |
-| [![Build Status](https://travis-ci.org/sisl/GaussianFilters.jl.svg?branch=master)](https://travis-ci.org/sisl/GaussianFilters.jl) |  [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sisl.github.io/GaussianFilters.jl/latest) |
+| Testing  | Coverage | Documentation |
+| :-----:  | :------: | :-----------: |
+| [![Build Status](https://travis-ci.org/sisl/GaussianFilters.jl.svg?branch=master)](https://travis-ci.org/sisl/GaussianFilters.jl) | [![Coverage Status](https://coveralls.io/repos/github/sisl/GaussianFilters.jl/badge.svg?branch=master)](https://coveralls.io/github/sisl/GaussianFilters.jl?branch=master) |  [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sisl.github.io/GaussianFilters.jl/latest) |
 
 # GaussianFilters.jl
 
