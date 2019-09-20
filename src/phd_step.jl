@@ -25,14 +25,12 @@ Arguments:
 Returns:
 - `xp::GaussianMixture` Describe first return value. [Gaussian Mixture]
 
-Notes:
-1. Make specific comments about corner cases or things to know about usage here.
-
 References:
-1. List citations to references used in writing the function here
+1. Vo, B. N., & Ma, W. K. (2006). The Gaussian mixture probability hypothesis
+density filter. IEEE Transactions on signal processing, 54(11), 4091-4104.
 """
-
-function step(x::GaussianMixture, Z::Vector{Vector{T}}, PHD::PHDFilter) where T <: Real
+function step(x::GaussianMixture, Z::Vector{Vector{T}},
+                PHD::PHDFilter) where T <: Real
 
     J_k = x.N
     n = length(x.μ[1])
@@ -131,11 +129,9 @@ Arguments:
 Returns:
 - `xp::GaussianMixture` Describe first return value. [Gaussian Mixture]
 
-Notes:
-1. Make specific comments about corner cases or things to know about usage here.
-
 References:
-1. List citations to references used in writing the function here
+1. Vo, B. N., & Ma, W. K. (2006). The Gaussian mixture probability hypothesis
+density filter. IEEE Transactions on signal processing, 54(11), 4091-4104.
 """
 function step_prune(x::GaussianMixture, Z::Vector{Vector{N}}, PHD::PHDFilter,
     T::Real, U::Real, J_max::Integer) where N <: Real

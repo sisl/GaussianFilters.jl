@@ -1,17 +1,16 @@
 """
-    Multiple-Target State Extraction(x, threshold)
+    multiple_target_state_extraction(x, threshold)
 
-    Extracts targets whose weights (x.w) are above threshold.
+Extracts targets whose weights (x.w) are above threshold.
 
-    Arguments:
-        x: Set of Gaussian Mixtures
-        threshold: Threshold on weights. Above this threshold,
-        state estimate is extracted
+Arguments:
+    x: Set of Gaussian Mixtures
+    threshold: Threshold on weights. Above this threshold,
+    state estimate is extracted
 
-    Returns:
-        X: Multi-Target State Estimate
+Returns:
+    X: Multi-Target State Estimate
 """
-
 function multiple_target_state_extraction(x, threshold)
     inds = x.w .> threshold
     N = sum(inds)

@@ -1,5 +1,5 @@
 """
-    prune(x,T,U,J_max)
+    prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
 
 Prune the posterior Gaussian-Mixture
 
