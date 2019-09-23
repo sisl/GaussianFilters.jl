@@ -4,7 +4,7 @@
 
 # GaussianFilters.jl
 
-GaussianFilters implements methods to define and run **Kalman**, **Extended Kalman**, **Unscented Kalman**, and **Gaussian-Mixture Probabilistic Hypothesis Density** Filters on simulated data. It also implements simulation functions for the Kalman-class filters.
+GaussianFilters implements methods to define and run **Kalman**, **Extended Kalman**, **Unscented Kalman**, and **Gaussian-Mixture Probability Hypothesis Density** Filters on simulated data. It also implements simulation functions for the Kalman-class filters.
 
 ## Documentation
 
@@ -24,7 +24,7 @@ Pkg.add(PackageSpec(url="https://github.com/sisl/GaussianFilters.jl"))
 Basic usage follows along defining appropriate models, constructing an appropriate filter, and running the filter with known actions on some measurement data.
 
 ```julia
-using GaussianFilters
+using GaussianFilters, LinearAlgebra
 
 # dynamics model
 A = [1 0.1; 0 1]
@@ -33,7 +33,7 @@ W = [0.5 0; 0 0.5]
 dmodel = LinearDynamicsModel(A, B, W)
 
 # measurement model
-measure(x, u) = norm(x, 2)
+measure(x, u) = LinearAlgebra.norm(x, 2)
 V = [0.01]
 omodel = NonlinearObservationModel(measure, V)
 
