@@ -20,7 +20,7 @@ Construct linear dynamics model with; transition matrix A,
 control matrix B, and symmetric zero-mean process noise with
 symmetric covariance matrix W
 """
-mutable struct LinearDynamicsModel{a<:Number, b<:Number,
+struct LinearDynamicsModel{a<:Number, b<:Number,
                 c<:Number} <: DynamicsModel
     A::Matrix{a}
     B::Matrix{b}
@@ -49,7 +49,7 @@ Construct linear observation dynamics model with; transition matrix C,
 control matrix B, and symmetric zero-mean measurement noise with
 symmetric covariance matrix V
 """
-mutable struct LinearObservationModel{a<:Number,b<:Number,c<:Number} <: ObservationModel
+struct LinearObservationModel{a<:Number,b<:Number,c<:Number} <: ObservationModel
     C::Matrix{a}
     D::Matrix{b}
     V::Symmetric{c}
@@ -80,7 +80,7 @@ end
 Construct nonlinear dynamics model with transition function f
 and symmetric zero-mean process noise with symmetric covariance matrix W
 """
-mutable struct NonlinearDynamicsModel{c<:Number} <: DynamicsModel
+struct NonlinearDynamicsModel{c<:Number} <: DynamicsModel
     f::Function
     W::Symmetric{c}
 end
@@ -96,7 +96,7 @@ end
 Construct nonlinear observation dynamics model with measurement function h
 and symmetric zero-mean measurement noise with symmetric covariance matrix V
 """
-mutable struct NonlinearObservationModel{c<:Number} <: ObservationModel
+struct NonlinearObservationModel{c<:Number} <: ObservationModel
     h::Function
     V::Symmetric{c}
 end
@@ -120,7 +120,7 @@ abstract type AbstractFilter end
 Construct Kalman filter with LinearDynamicsModel d and
 LinearObservationModel o.
 """
-mutable struct KalmanFilter <: AbstractFilter
+struct KalmanFilter <: AbstractFilter
     d::LinearDynamicsModel
     o::LinearObservationModel
 end
@@ -133,7 +133,7 @@ end
 Construct Extended Kalman filter with DynamicsModel d and
 ObservationModel o.
 """
-mutable struct ExtendedKalmanFilter <: AbstractFilter
+struct ExtendedKalmanFilter <: AbstractFilter
     d::DynamicsModel
     o::ObservationModel
     ExtendedKalmanFilter(d,o) =
@@ -152,7 +152,7 @@ and UKF parameters λ, α, and β. Default constructor uses α/β formulation fr
 Probabilistic Robotics, second constructor reduces complexity, third
 constructor defaults λ to 2, as is commonly done.
 """
-mutable struct UnscentedKalmanFilter{a<:Number,b<:Number,c<:Number} <: AbstractFilter
+struct UnscentedKalmanFilter{a<:Number,b<:Number,c<:Number} <: AbstractFilter
     d::DynamicsModel
     o::ObservationModel
     λ::a
@@ -181,7 +181,7 @@ end
 Construct a gaussian belief, consisting of mean vector μ
 and symmetric covariance matrix Σ
 """
-mutable struct GaussianBelief{a<:Number,b<:Number}
+struct GaussianBelief{a<:Number,b<:Number}
     μ::Vector{a}
     Σ::Symmetric{b}
     #=
