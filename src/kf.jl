@@ -1,13 +1,13 @@
 # Generic update function
 
 """
-    update(b0::GaussianBelief, u::Vector, y::Vector, filter::AbstractFilter;
-        return_prediction = false)
+    update(b0::GaussianBelief, u::AbstractVector, y::AbstractVector,
+        filter::AbstractFilter)
 
 Uses AbstractFilter filter to update gaussian belief b0, given control vector
 u and measurement vector y.
 """
-function update(b0::GaussianBelief, u::Vector{a}, y::Vector{b},
+function update(b0::GaussianBelief, u::AbstractVector{a}, y::AbstractVector{b},
                 filter::AbstractFilter) where {a<:Number, b<:Number}
 
     # predict
@@ -22,12 +22,12 @@ end
 # Kalman filter functions
 
 """
-    predict(b0::GaussianBelief, u::Vector, filter::KalmanFilter)
+    predict(b0::GaussianBelief, u::AbstractVector, filter::KalmanFilter)
 
 Uses Kalman filter to run prediction step on gaussian belief b0, given control
 vector u.
 """
-function predict(b0::GaussianBelief, u::Vector{a},
+function predict(b0::GaussianBelief, u::AbstractVector{a},
             filter::KalmanFilter) where a<:Number
 
     # Motion update
@@ -37,15 +37,15 @@ function predict(b0::GaussianBelief, u::Vector{a},
 end
 
 """
-    measure(bp::GaussianBelief, y::Vector, filter::KalmanFilter;
-        u::Vector = [false])
+    measure(bp::GaussianBelief, y::AbstractVector, filter::KalmanFilter;
+        u::AbstractVector = [false])
 
 Uses Kalman filter to run measurement update on predicted gaussian belief bp,
 given measurement vector y. If u is specified and filter.o.D has been declared,
 then matrix D will be factored into the y predictions
 """
-function measure(bp::GaussianBelief, y::Vector{a}, filter::KalmanFilter;
-                u::Vector{b} = [false]) where {a<:Number, b<:Number}
+function measure(bp::GaussianBelief, y::AbstractVector{a}, filter::KalmanFilter;
+                u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
     # Kalman Gain
     K = bp.Σ * filter.o.C' *
         inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
@@ -69,7 +69,7 @@ end
 ### Simulation functions ###
 
 """
-    simulation(b0::GaussianBelief,action_sequence::Vector{Vector}},
+    simulation(b0::GaussianBelief,action_sequence::Vector{AbstractVector}},
         filter::AbstractFilter)
 
 Run a simulation to get positions and measurements. Samples starting point from
@@ -77,15 +77,15 @@ GaussianBelief b0, the runs action_sequence with additive gaussian noise all
 specified by AbstractFilter filter to return a simulated state and measurement
 history.
 """
-function simulation(b0::GaussianBelief, action_sequence::Vector{Vector{a}},
-    filter::AbstractFilter) where a<:Number
+function simulation(b0::GaussianBelief, action_sequence::Vector{T},
+    filter::AbstractFilter) where T<:AbstractArray
 
     # make initial state
     s0 = b0.μ + cholesky(b0.Σ).L * randn(size(b0.Σ,1))
 
     # simulate action sequence
     state_history = [s0]
-    measurement_history = Vector{Vector{typeof(s0[1])}}()
+    measurement_history = Vector{AbstractVector{typeof(s0[1])}}()
     for u in action_sequence
         xn, yn = simulate_step(state_history[end], u, filter)
         push!(state_history, xn)
@@ -97,12 +97,12 @@ function simulation(b0::GaussianBelief, action_sequence::Vector{Vector{a}},
 end
 
 """
-    simulate_step(x::Vector, u::Vector, filter::KalmanFilter)
+    simulate_step(x::AbstractVector, u::AbstractVector, filter::KalmanFilter)
 
 Run a step of simulation starting at state x, taking action u, and using the
 motion and measurement equations specified by Kalman Filter filter.
 """
-function simulate_step(x::Vector{a}, u::Vector{b},
+function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
     filter::KalmanFilter) where {a<:Number, b<:Number}
 
     # Linear Motion
@@ -120,16 +120,16 @@ function simulate_step(x::Vector{a}, u::Vector{b},
 end
 
 """
-    run_filter(b0::GaussianBelief, action_history::Vector{Vector},
-            measurement_history::Vector{Vector}, filter::AbstractFilter)
+    run_filter(b0::GaussianBelief, action_history::Vector{AbstractVector},
+            measurement_history::Vector{AbstractVector}, filter::AbstractFilter)
 
 Given an initial belief b0, matched-size arrays for action and measurement
 histories and a filter, update the beliefs using the filter, and return a
 vector of all beliefs.
 """
-function run_filter(b0::GaussianBelief, action_history::Vector{Vector{a}},
-            measurement_history::Vector{Vector{b}},
-            filter::AbstractFilter) where {a<:Number, b<:Number}
+function run_filter(b0::GaussianBelief, action_history::Vector{A},
+            measurement_history::Vector{B},
+            filter::AbstractFilter) where {A<:AbstractVector, B<:AbstractVector}
 
         # assert matching action and measurement sizes
         @assert length(action_history) == length(measurement_history)

@@ -48,7 +48,7 @@ function unscented_transform(b::GaussianBelief, λ::Number=2, α::Number=1,
 end
 
 """
-    unscented_transform_inverse(points::Vector{Vector}, w_μ::Vector,
+    unscented_transform_inverse(points::Vector{AbstractVector}, w_μ::Vector,
         w_Σ::Vector)
 
 Convert a 2n+1 sigma points and weights back to a single measure for
@@ -58,8 +58,8 @@ Uses formulation from ProbRob for α/β parameters on a separate covariance
 weighting, although this is not necessary.
 
 """
-function unscented_transform_inverse(points::Vector{Vector{a}}, w_μ::Vector{b},
-    w_Σ::Vector{c}) where {a<:Number, b<:Number, c<:Number}
+function unscented_transform_inverse(points::Vector{A}, w_μ::Vector{B},
+    w_Σ::Vector{C}) where {A<:AbstractVector, B<:Number, C<:Number}
 
     # calculate weighted mean
     μ = sum(points .* w_μ)
@@ -75,12 +75,12 @@ end
 # Unscented Kalman Filter functions
 
 """
-    predict(b0::GaussianBelief, u::Vector, filter::UnscentedKalmanFilter)
+    predict(b0::GaussianBelief, u::AbstractVector, filter::UnscentedKalmanFilter)
 
 Uses Unscented Kalman filter to run prediction step on gaussian belief b0,
 given control vector u.
 """
-function predict(b0::GaussianBelief, u::Vector{a},
+function predict(b0::GaussianBelief, u::AbstractVector{a},
             filter::UnscentedKalmanFilter) where a<:Number
 
     # Motion update
@@ -120,15 +120,15 @@ function predict(b0::GaussianBelief, u::Vector{a},
 end
 
 """
-    measure(bp::GaussianBelief, y::Vector, filter::UnscentedKalmanFilter;
-        u::Vector = [false])
+    measure(bp::GaussianBelief, y::AbstractVector, filter::UnscentedKalmanFilter;
+        u::AbstractVector = [false])
 
 Uses Unscented Kalman filter to run measurement update on predicted gaussian
 belief bp, given measurement vector y. If u is specified and filter.o.D has
 been declared, then matrix D will be factored into the y predictions.
 """
-function measure(bp::GaussianBelief, y::Vector{a}, filter::UnscentedKalmanFilter;
-                u::Vector{b} = [false]) where {a<:Number, b<:Number}
+function measure(bp::GaussianBelief, y::AbstractVector{a}, filter::UnscentedKalmanFilter;
+                u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
 
     # Measurement update
 
@@ -186,12 +186,12 @@ end
 
 ### Simulation function ###
 """
-    simulate_step(x::Vector, u::Vector, filter::UnscentedKalmanFilter)
+    simulate_step(x::AbstractVector, u::AbstractVector, filter::UnscentedKalmanFilter)
 
 Run a step of simulation starting at state x, taking action u, and using the
 motion and measurement equations specified by Kalman Filter filter.
 """
-function simulate_step(x::Vector{a}, u::Vector{b},
+function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
     filter::UnscentedKalmanFilter) where {a<:Number, b<:Number}
 
     # Motion

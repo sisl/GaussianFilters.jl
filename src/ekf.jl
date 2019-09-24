@@ -1,12 +1,12 @@
 # Extended Kalman filter functions
 
 """
-    predict(b0::GaussianBelief, u::Vector, filter::ExtendedKalmanFilter)
+    predict(b0::GaussianBelief, u::AbstractVector, filter::ExtendedKalmanFilter)
 
 Uses Extended Kalman filter to run prediction step on gaussian belief b0,
 given control vector u.
 """
-function predict(b0::GaussianBelief, u::Vector{a},
+function predict(b0::GaussianBelief, u::AbstractVector{a},
             filter::ExtendedKalmanFilter) where a<:Number
 
     # Motion update
@@ -35,15 +35,15 @@ function predict(b0::GaussianBelief, u::Vector{a},
 end
 
 """
-    measure(bp::GaussianBelief, y::Vector, filter::ExtendedKalmanFilter;
-        u::Vector = [false])
+    measure(bp::GaussianBelief, y::AbstractVector, filter::ExtendedKalmanFilter;
+        u::AbstractVector = [false])
 
 Uses Extended Kalman filter to run measurement update on predicted gaussian
 belief bp, given measurement vector y. If u is specified and filter.o.D has
 been declared, then matrix D will be factored into the y predictions.
 """
-function measure(bp::GaussianBelief, y::Vector{a}, filter::ExtendedKalmanFilter;
-                u::Vector{b} = [false]) where {a<:Number, b<:Number}
+function measure(bp::GaussianBelief, y::AbstractVector{a}, filter::ExtendedKalmanFilter;
+                u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
 
     # Measurement update
 
@@ -88,12 +88,12 @@ end
 
 ### Simulation function ###
 """
-    simulate_step(x::Vector, u::Vector, filter::ExtendedKalmanFilter)
+    simulate_step(x::AbstractVector, u::AbstractVector, filter::ExtendedKalmanFilter)
 
 Run a step of simulation starting at state x, taking action u, and using the
 motion and measurement equations specified by Kalman Filter filter.
 """
-function simulate_step(x::Vector{a}, u::Vector{b},
+function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
     filter::ExtendedKalmanFilter) where {a<:Number, b<:Number}
 
     # Motion

@@ -13,8 +13,8 @@ and nonlinear observation models
 abstract type ObservationModel end
 
 """
-    LinearDynamicsModel(A::Matrix,B::Matrix,W::Symmetric)
-    LinearDynamicsModel(A::Matrix,B::Matrix,W::Matrix)
+    LinearDynamicsModel(A::AbstractMatrix,B::AbstractMatrix,W::Symmetric)
+    LinearDynamicsModel(A::AbstractMatrix,B::AbstractMatrix,W::AbstractMatrix)
 
 Construct linear dynamics model with; transition matrix A,
 control matrix B, and symmetric zero-mean process noise with
@@ -22,8 +22,8 @@ symmetric covariance matrix W
 """
 struct LinearDynamicsModel{a<:Number, b<:Number,
                 c<:Number} <: DynamicsModel
-    A::Matrix{a}
-    B::Matrix{b}
+    A::AbstractMatrix{a}
+    B::AbstractMatrix{b}
     W::Symmetric{c}
     #=
     function LinearDynamicsModel{a,b,c}(A::Matrix{a},B::Matrix{b},W::Symmetrix{c})
@@ -35,23 +35,25 @@ struct LinearDynamicsModel{a<:Number, b<:Number,
     =#
 end
 
-function LinearDynamicsModel(A::Matrix, B::Matrix, W::Matrix)
+function LinearDynamicsModel(A::AbstractMatrix, B::AbstractMatrix,
+                             W::AbstractMatrix)
+
     return LinearDynamicsModel(A,B,Symmetric(W))
 end
 
 """
-    LinearObservationModel(C::Matrix,D::Matrix,V::Symmetric)
-    LinearObservationModel(C::Matrix,D::Matrix,V::Matrix)
-    LinearObservationModel(C::Matrix,V::Symmetric)
-    LinearObservationModel(C::Matrix,V::Matrix)
+    LinearObservationModel(C::AbstractMatrix,D::AbstractMatrix,V::Symmetric)
+    LinearObservationModel(C::AbstractMatrix,D::AbstractMatrix,V::AbstractMatrix)
+    LinearObservationModel(C::AbstractMatrix,V::Symmetric)
+    LinearObservationModel(C::AbstractMatrix,V::AbstractMatrix)
 
 Construct linear observation dynamics model with; transition matrix C,
 control matrix B, and symmetric zero-mean measurement noise with
 symmetric covariance matrix V
 """
 struct LinearObservationModel{a<:Number,b<:Number,c<:Number} <: ObservationModel
-    C::Matrix{a}
-    D::Matrix{b}
+    C::AbstractMatrix{a}
+    D::AbstractMatrix{b}
     V::Symmetric{c}
     #=
     LinearObservationModel(C,D,V) = (size(C,1) == size(D,1) == size(V,1)) ?
@@ -59,23 +61,24 @@ struct LinearObservationModel{a<:Number,b<:Number,c<:Number} <: ObservationModel
     =#
 end
 
-function LinearObservationModel(C::Matrix, D::Matrix, V::Matrix)
+function LinearObservationModel(C::AbstractMatrix, D::AbstractMatrix,
+                                V::AbstractMatrix)
     return LinearObservationModel(C,D,Symmetric(V))
 end
 
-function LinearObservationModel(C::Matrix, V::Symmetric)
+function LinearObservationModel(C::AbstractMatrix, V::Symmetric)
     n = size(C,1)
     return LinearObservationModel(C,zeros(Bool,n,n),V)
 end
 
-function LinearObservationModel(C::Matrix, V::Matrix)
+function LinearObservationModel(C::AbstractMatrix, V::AbstractMatrix)
     n = size(C,1)
     return LinearObservationModel(C,zeros(Bool,n,n),Symmetric(V))
 end
 
 """
     NonlinearDynamicsModel(f::Function,W::Symmetric)
-    NonlinearDynamicsModel(f::Function,W::Matrix)
+    NonlinearDynamicsModel(f::Function,W::AbstractMatrix)
 
 Construct nonlinear dynamics model with transition function f
 and symmetric zero-mean process noise with symmetric covariance matrix W
@@ -85,13 +88,13 @@ struct NonlinearDynamicsModel{c<:Number} <: DynamicsModel
     W::Symmetric{c}
 end
 
-function NonlinearDynamicsModel(f::Function, W::Matrix)
+function NonlinearDynamicsModel(f::Function, W::AbstractMatrix)
     return NonlinearDynamicsModel(f,Symmetric(W))
 end
 
 """
     NonlinearObservationModel(h::Function,V::Symmetric)
-    NonlinearObservationModel(h::Function,V::Matrix)
+    NonlinearObservationModel(h::Function,V::AbstractMatrix)
 
 Construct nonlinear observation dynamics model with measurement function h
 and symmetric zero-mean measurement noise with symmetric covariance matrix V
@@ -101,7 +104,7 @@ struct NonlinearObservationModel{c<:Number} <: ObservationModel
     V::Symmetric{c}
 end
 
-function NonlinearObservationModel(h::Function, V::Matrix)
+function NonlinearObservationModel(h::Function, V::AbstractMatrix)
     return NonlinearObservationModel(h,Symmetric(V))
 end
 
@@ -175,14 +178,14 @@ end
 ### Belief States ###
 
 """
-    GaussianBelief(μ::Vector,Σ::Symmetric)
-    GaussianBelief(μ::Vector,Σ::Matrix)
+    GaussianBelief(μ::AbstractVector,Σ::Symmetric)
+    GaussianBelief(μ::AbstractVector,Σ::AbstractMatrix)
 
 Construct a gaussian belief, consisting of mean vector μ
 and symmetric covariance matrix Σ
 """
 struct GaussianBelief{a<:Number,b<:Number}
-    μ::Vector{a}
+    μ::AbstractVector{a}
     Σ::Symmetric{b}
     #=
     function GaussianBelief{a,b}(μ::Vector{a},
@@ -193,6 +196,6 @@ struct GaussianBelief{a<:Number,b<:Number}
     =#
 end
 
-function GaussianBelief(μ::Vector,Σ::Matrix)
+function GaussianBelief(μ::AbstractVector,Σ::AbstractMatrix)
     return GaussianBelief(μ,Symmetric(Σ))
 end
