@@ -1,56 +1,56 @@
 """
-	update(x::GaussianMixture, Z::Vector{AbstractVector}, PHD::PHDFilter,
+	update(phd::PHDFilter, b0::GaussianMixture, Z::Vector{AbstractVector},
 		T::Real, U::Real, J_max::Integer)
 
 Perform an update step using a GMPHD Filter.
 
 Arguments:
-- `x::GaussianMixture` Prior state distribution. [Gaussian Mixture]
+- `phd::PHDFilter` PHD filter to step through. [PHD Filter]
+- `b0::GaussianMixture` Prior state distribution. [Gaussian Mixture]
 - `Z::Matrix` Matrix of measurements. [Measurements]
-- `PHD::PHDFilter` PHD filter to step through. [PHD Filter]
 - `T::Real` Truncation threshold.  Drop distributions with weight less than T
 - `U::Real` Merging threshold.  Merge if (μ_1-μ_2)^T * Σ^-1 * (μ_1-μ_2) < U
 - `J_max::Integer` Maximum number of features
 
 Returns:
-- `xn::GaussianMixture` Describe first return value. [Gaussian Mixture]
+- `bn::GaussianMixture` Describe first return value. [Gaussian Mixture]
 
 References:
 1. Vo, B. N., & Ma, W. K. (2006). The Gaussian mixture probability hypothesis
 density filter. IEEE Transactions on signal processing, 54(11), 4091-4104.
 """
-function update(x::GaussianMixture, Z::Vector{<:AbstractVector{<:Real}},
-	PHD::PHDFilter, T::Real, U::Real, J_max::Integer)
+function update(phd::PHDFilter, b0::GaussianMixture,
+	Z::Vector{<:AbstractVector{<:Number}}, T::Real, U::Real, J_max::Integer)
 
-	xp = predict(x, PHD)
-	xm = measure(xp, Z, PHD)
-    xn = prune(xm, T, U, J_max)
-    return xn
+	bp = predict(phd, b0)
+	bm = measure(phd, bp, Z)
+    bn = prune(bm, T, U, J_max)
+    return bn
 end
 
 """
-	predict(x::GaussianMixture, PHD::PHDFilter)
+	predict(phd::PHDFilter, b0::GaussianMixture)
 
 Make a prediction on next state based on PHD dynamics
 
 Arguments:
-- `x::GaussianMixture` Prior state distribution. [Gaussian Mixture]
-- `PHD::PHDFilter` PHD filter to step through. [PHD Filter]
+- `phd::PHDFilter` PHD filter to step through. [PHD Filter]
+- `b0::GaussianMixture` Prior state distribution. [Gaussian Mixture]
 
 Returns:
-- `xp::GaussianMixture` Predicted next state distribution. [Gaussian Mixture]
+- `bp::GaussianMixture` Predicted next state distribution. [Gaussian Mixture]
 
 References:
 1. Vo, B. N., & Ma, W. K. (2006). The Gaussian mixture probability hypothesis
 density filter. IEEE Transactions on signal processing, 54(11), 4091-4104.
 """
-function predict(x::GaussianMixture, PHD::PHDFilter)
+function predict(phd::PHDFilter, b0::GaussianMixture)
 
-    J_k = x.N
-    n = length(x.μ[1])
-    J_γ = PHD.γ.N
-    J_β = PHD.spawn.β.N
-    J_dyn = length(PHD.dyn)
+    J_k = b0.N
+    n = length(b0.μ[1])
+    J_γ = phd.γ.N
+    J_β = phd.spawn.β.N
+    J_dyn = length(phd.dyn)
     tot = J_γ + J_β*J_k + J_k*J_dyn
     w_p = [0.0 for i in 1:tot]
     μ_p = [zeros(n) for i in 1:tot]
@@ -60,93 +60,93 @@ function predict(x::GaussianMixture, PHD::PHDFilter)
     i = 0
     for j in 1:J_γ
         i += 1
-        w_p[i] = PHD.γ.w[j]
-        μ_p[i] = PHD.γ.μ[j]
-        Σ_p[i] = PHD.γ.Σ[j]
+        w_p[i] = phd.γ.w[j]
+        μ_p[i] = phd.γ.μ[j]
+        Σ_p[i] = phd.γ.Σ[j]
     end
 
 
     for j in 1:J_β, ℓ in 1:J_k
         i += 1
-        spawn_dyn = PHD.spawn.dyn[j]
-        w_p[i] = x.w[ℓ]*PHD.spawn.β.w[j]
-        μ_p[i] =  spawn_dyn.d + spawn_dyn.A*x.μ[ℓ]
-        Σ_p[i] = spawn_dyn.Q + spawn_dyn.A*x.Σ[ℓ]*spawn_dyn.A'
+        spawn_dyn = phd.spawn.dyn[j]
+        w_p[i] = b0.w[ℓ]*phd.spawn.β.w[j]
+        μ_p[i] =  spawn_dyn.d + spawn_dyn.A*b0.μ[ℓ]
+        Σ_p[i] = spawn_dyn.Q + spawn_dyn.A*b0.Σ[ℓ]*spawn_dyn.A'
     end
 
     # 2. Prediction for existing targets
     for j in 1:J_k
         for k in 1:J_dyn
             i += 1
-            w_p[i] = PHD.Ps*x.w[j]
-            μ_p[i] = PHD.dyn[k].A*x.μ[j]
-            Σ_p[i] = PHD.dyn[k].Q + PHD.dyn[k].A*x.Σ[j]*PHD.dyn[k].A'
+            w_p[i] = phd.Ps*b0.w[j]
+            μ_p[i] = phd.dyn[k].A*b0.μ[j]
+            Σ_p[i] = phd.dyn[k].Q + phd.dyn[k].A*b0.Σ[j]*phd.dyn[k].A'
         end
     end
     @assert i == tot "Poor Indexing"
-    xp = GaussianMixture(w_p, μ_p, Σ_p)
-	return xp
+    bp = GaussianMixture(w_p, μ_p, Σ_p)
+	return bp
 end
 
 """
-	measure(xp::GaussianMixture, Z::Vector{AbstractVector}, PHD::PHDFilter)
+	measure(phd::PHDFilter, bp::GaussianMixture, Z::Vector{AbstractVector})
 
 Perform a measurement update on a predicted PHD next state.
 
 Arguments:
-- `xp::GaussianMixture` Prior state distribution. [Gaussian Mixture]
+- `phd::PHDFilter` PHD filter to step through. [PHD Filter]
+- `bp::GaussianMixture` Prior state distribution. [Gaussian Mixture]
 - `Z::Vector{AbstractVector}` Array of measurements. [Measurements]
-- `PHD::PHDFilter` PHD filter to step through. [PHD Filter]
 
 Returns:
-- `xm::GaussianMixture` Describe first return value. [Gaussian Mixture]
+- `bm::GaussianMixture` Describe first return value. [Gaussian Mixture]
 
 References:
 1. Vo, B. N., & Ma, W. K. (2006). The Gaussian mixture probability hypothesis
 density filter. IEEE Transactions on signal processing, 54(11), 4091-4104.
 """
-function measure(xp::GaussianMixture, Z::Vector{<:AbstractVector{T}},
-                PHD::PHDFilter) where T <: Real
+function measure(phd::PHDFilter, bp::GaussianMixture,
+				Z::Vector{<:AbstractVector{<: Real}})
 
 	# 3. Construction of PHD update components
 
-    J_p = xp.N
+    J_p = bp.N
 
     η_n = []
     S_n = []
     K_n = []
     P_n = []
     for j in 1:J_p
-        push!(η_n, PHD.meas.C*xp.μ[j])
+        push!(η_n, phd.meas.C*bp.μ[j])
 
-        S_add = PHD.meas.R + PHD.meas.C*xp.Σ[j]*PHD.meas.C'
+        S_add = phd.meas.R + phd.meas.C*bp.Σ[j]*phd.meas.C'
         push!(S_n, S_add)
 
-        K_add = xp.Σ[j]*PHD.meas.C'*inv(S_add)
+        K_add = bp.Σ[j]*phd.meas.C'*inv(S_add)
         push!(K_n, K_add)
 
-        P_add = (1.0I - K_add*PHD.meas.C)*xp.Σ[j]
+        P_add = (1.0I - K_add*phd.meas.C)*bp.Σ[j]
         push!(P_n, P_add)
     end
 
     # 4. Update
-    w_n = similar(xp.w,0)
-    μ_n = similar(xp.μ,0)
-    Σ_n = similar(xp.Σ,0)
+    w_n = similar(bp.w,0)
+    μ_n = similar(bp.μ,0)
+    Σ_n = similar(bp.Σ,0)
     for j in 1:J_p
-        push!(w_n,(1-PHD.Pd)*xp.w[j])
-        push!(μ_n, xp.μ[j])
-        push!(Σ_n, xp.Σ[j])
+        push!(w_n,(1-phd.Pd)*bp.w[j])
+        push!(μ_n, bp.μ[j])
+        push!(Σ_n, bp.Σ[j])
     end
 
     for z in Z
         w_ntemp = []
         for j in 1:J_p
-            push!(w_ntemp, PHD.Pd*xp.w[j]*MvNormalPDF(z,η_n[j],S_n[j]))
-            push!(μ_n, xp.μ[j] + K_n[j]*(z-η_n[j]))
+            push!(w_ntemp, phd.Pd*bp.w[j]*MvNormalPDF(z,η_n[j],S_n[j]))
+            push!(μ_n, bp.μ[j] + K_n[j]*(z-η_n[j]))
             push!(Σ_n, P_n[j])
         end
-        append!(w_n, w_ntemp ./ (PHD.κ(z) + sum(w_ntemp)))
+        append!(w_n, w_ntemp ./ (phd.κ(z) + sum(w_ntemp)))
     end
 
     xm = GaussianMixture(w_n, μ_n, Σ_n)
@@ -154,24 +154,24 @@ function measure(xp::GaussianMixture, Z::Vector{<:AbstractVector{T}},
 end
 
 """
-    prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
+    prune(b::GaussianMixture, T::Real, U::Real, J_max::Integer)
 
 Prune the posterior Gaussian-Mixture next PHD state
 
 Arguments:
-- `x::GaussianMixture` Posterior state distribution. [Gaussian Mixture]
+- `b::GaussianMixture` Posterior state distribution. [Gaussian Mixture]
 - `T::Real` Truncation threshold.  Drop distributions with weight less than T
 - `U::Real` Merging threshold.  Merge if (μ_1-μ_2)^T * Σ^-1 * (μ_1-μ_2) < U
 - `J_max::Integer` Maximum number of features
 """
-function prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
+function prune(b::GaussianMixture, T::Real, U::Real, J_max::Integer)
 	l = 0
-	J_k = x.N
-	n = length(x.μ[1])
+	J_k = b.N
+	n = length(b.μ[1])
 
 	# prune indices based on truncation threshold
 	I = collect(1:J_k)
-	I = I[x.w.>T]
+	I = I[b.w.>T]
 
 	# setup output vectors
 	w_new = zeros(J_k)
@@ -181,24 +181,24 @@ function prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
 	# perform pruning
 	while length(I) != 0
 		l = l+1
-		j = I[argmax(x.w[I])]
+		j = I[argmax(b.w[I])]
 
 		# Merge close features
 		L = []
 		for i in I
-			delta = x.μ[i]-x.μ[j]
-			if dot(delta, inv(x.Σ[i])*delta) < U
+			delta = b.μ[i]-b.μ[j]
+			if dot(delta, inv(b.Σ[i])*delta) < U
 				push!(L,i)
 			end
 		end
 
 		# determine merged parameters
-		w_tilde = sum(x.w[L])
-		μ_tilde = 1/w_tilde * sum(x.w[L].*x.μ[L])
+		w_tilde = sum(b.w[L])
+		μ_tilde = 1/w_tilde * sum(b.w[L].*b.μ[L])
 		Σ_tilde = zeros(n,n)
 		for i in L
-			tmp = x.Σ[i] + (μ_tilde-x.μ[i])*(μ_tilde-x.μ[i])'
-			Σ_tilde = Σ_tilde + x.w[i]*tmp
+			tmp = b.Σ[i] + (μ_tilde-b.μ[i])*(μ_tilde-b.μ[i])'
+			Σ_tilde = Σ_tilde + b.w[i]*tmp
 		end
 		Σ_tilde = 1/w_tilde * Σ_tilde
 
@@ -224,8 +224,8 @@ function prune(x::GaussianMixture, T::Real, U::Real, J_max::Integer)
 		Σ_new = Σ_new[1:l]
 	end
 
-	x_new = GaussianMixture(w_new,μ_new,Σ_new)
-	return x_new
+	bn = GaussianMixture(w_new,μ_new,Σ_new)
+	return bn
 end
 
 ### Utilities
