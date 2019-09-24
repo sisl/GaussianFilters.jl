@@ -5,7 +5,6 @@ using LinearAlgebra
 using ForwardDiff
 using Random
 import Random: rand
-import Base: step
 
 # Kalman, Extended Kalman, Unscented Kalman Filters
 
@@ -50,17 +49,15 @@ export
 include("gmphd_classes.jl")
 
 export
-	step,
-	step_prune
-include("phd_step.jl")
-
-export
+	update,
+	predict,
+	measure,
 	prune
-include("prune.jl")
+include("gmphd.jl")
 
 export
 	multiple_target_state_extraction
-include("extraction.jl")
+include("gmphd_extraction.jl")
 
 # TODO: Add Labeled Multi-Bernoulli Filter
 

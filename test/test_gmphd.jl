@@ -18,8 +18,9 @@ let
     @test phd2.γ.N == 1
     @test phd1.dyn == phd2.dyn
 
-    # Step and test stepping
-    s = step(x0,Z,phd1)
+    # Predict/Measure and test update
+    xp = predict(x0,phd1)
+    s = measure(xp,Z,phd1)
     @test s.N == 6
     array_isapprox(s.w, [0.5, 0.5, 0.25, 0.425012, 0.383326, 0.191663], atol=0.002)
     @test length(s.Σ) == s.N
@@ -34,8 +35,8 @@ let
     array_isapprox(p.w, [0.925012, 1.32499], atol=0.002)
     @test length(p.μ) == p.N
 
-    # Test single step stepping / pruning
-    sp = step_prune(x0, Z, phd1, T, U, J_max)
+    # Test single step updating
+    sp = update(x0, Z, phd1, T, U, J_max)
     @test sp.w == p.w
     @test sp.μ == p.μ
 
@@ -128,7 +129,7 @@ let
     for t = 1:Δ:Tf
         MVD = MvNormal(Meas.R)
         z = [ Meas.C*xsim[t][i] + rand(MVD,1)[:] for i=1:length(xsim[t])]
-        x_new_pruned = step_prune(x[t],z,phd,T,U,J_max)
+        x_new_pruned = update(x[t],z,phd,T,U,J_max)
         push!(x, x_new_pruned)
     end
 
@@ -143,36 +144,3 @@ let
     array_isapprox(esf[1], [-282.13, -724.875, -1.9644, -46.7133], atol=0.002)
     array_isapprox(esf[4], [-313.933, -301.799, -3.09298, -1.9735], atol=0.002)
 end
-
-#= Arbitrary test for reference:
-let
-    # Here's an example of using the function array_isapprox
-    array = [1.0 1.001 0.999]
-    array_isapprox(array, 1.0, atol=0.002)
-end
-
-your_function(a,b) = b>0 ? (a+b,b) : (0,0)
-
-let
-    # Test first function here
-    r1, r2 = your_function(3, 1.5)
-    @test r1 == 4.5
-    @test r2 == 1.5
-
-    # Test corner case to function here
-    r1, r2 = your_function(1, -42)
-    @test r1 == 0
-    @test r2 == 0
-end
-
-RUBBER_DUCK_PER_SEC = 200
-let
-    @test RUBBER_DUCK_PER_SEC == 200
-end
-
-add_one(a) = a+1
-let
-    @test add_one(1) == 2
-end
-
-=#
