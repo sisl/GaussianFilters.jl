@@ -4,7 +4,7 @@
 Construct measurement model with observation matrix C and sensor
 noise matrix R
 """
-mutable struct Measurement{a,b}
+struct Measurement{a,b}
     C::Matrix{a}
     R::Matrix{b}
 end
@@ -16,7 +16,7 @@ end
 Construct linear dynamics model with; transition matrix A,
 process noise matrix Q and offset vector d
 """
-mutable struct Dynamics{a,b,c}
+struct Dynamics{a,b,c}
     A::Matrix{a}
     Q::Matrix{b}
     d::Vector{c}

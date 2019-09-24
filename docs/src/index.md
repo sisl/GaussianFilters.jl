@@ -1,6 +1,6 @@
 # GaussianFilters
 
-GaussianFilters implements methods to define and run **Kalman**, **Extended Kalman**, **Unscented Kalman**, and **Gaussian-Mixture Probabilistic Hypothesis Density** Filters on simulated data. It also implements simulation functions for the Kalman-class filters.
+GaussianFilters implements methods to define and run **Kalman**, **Extended Kalman**, **Unscented Kalman**, and **Gaussian-Mixture Probability Hypothesis Density** Filters on simulated data. It also implements simulation functions for the Kalman-class filters.
 
 The Kalman Filter and its nonlinear extensions (the Extended and Unscented KFs) are used commonly to localize state information from noisy observations \[1\]. [Wikipedia's Kalman Filter entry](https://en.wikipedia.org/wiki/Kalman_filter) is a useful resource for learning about the applications and advantages of the Kalman Filter, along with its nonlinear extensions.
 
