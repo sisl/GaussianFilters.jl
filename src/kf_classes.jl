@@ -175,8 +175,8 @@ end
 ### Belief States ###
 
 """
-    GaussianBelief(μ::Matrix,Σ::Symmetric)
-    GaussianBelief(μ::Matrix,Σ::Matrix)
+    GaussianBelief(μ::Vector,Σ::Symmetric)
+    GaussianBelief(μ::Vector,Σ::Matrix)
 
 Construct a gaussian belief, consisting of mean vector μ
 and symmetric covariance matrix Σ

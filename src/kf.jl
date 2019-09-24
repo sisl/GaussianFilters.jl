@@ -5,13 +5,10 @@
         return_prediction = false)
 
 Uses AbstractFilter filter to update gaussian belief b0, given control vector
-u and measurement vector y. If return_preduction is set to true, update
-also returns the predicted state (before the measurement update) as a second
-output
+u and measurement vector y.
 """
 function update(b0::GaussianBelief, u::Vector{a}, y::Vector{b},
-                filter::AbstractFilter;
-                return_prediction = false) where {a<:Number, b<:Number}
+                filter::AbstractFilter) where {a<:Number, b<:Number}
 
     # predict
     bp = predict(b0, u, filter)
@@ -19,7 +16,7 @@ function update(b0::GaussianBelief, u::Vector{a}, y::Vector{b},
     # measure
     bn = measure(bp, y, filter; u = u)
 
-    return return_prediction ? (bp, bn) : bn
+    return bn
 end
 
 # Kalman filter functions
