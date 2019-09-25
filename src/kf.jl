@@ -1,20 +1,20 @@
 # Generic update function
 
 """
-    update(b0::GaussianBelief, u::AbstractVector, y::AbstractVector,
-        filter::AbstractFilter)
+    update(filter::AbstractFilter, b0::GaussianBelief, u::AbstractVector,
+        y::AbstractVector)
 
 Uses AbstractFilter filter to update gaussian belief b0, given control vector
 u and measurement vector y.
 """
-function update(b0::GaussianBelief, u::AbstractVector{a}, y::AbstractVector{b},
-                filter::AbstractFilter) where {a<:Number, b<:Number}
+function update(filter::AbstractFilter, b0::GaussianBelief,
+                u::AbstractVector{<:Number}, y::AbstractVector{<:Number})
 
     # predict
-    bp = predict(b0, u, filter)
+    bp = predict(filter, b0, u)
 
     # measure
-    bn = measure(bp, y, filter; u = u)
+    bn = measure(filter, bp, y; u = u)
 
     return bn
 end
@@ -22,13 +22,13 @@ end
 # Kalman filter functions
 
 """
-    predict(b0::GaussianBelief, u::AbstractVector, filter::KalmanFilter)
+    predict(filter::KalmanFilter, b0::GaussianBelief, u::AbstractVector)
 
 Uses Kalman filter to run prediction step on gaussian belief b0, given control
 vector u.
 """
-function predict(b0::GaussianBelief, u::AbstractVector{a},
-            filter::KalmanFilter) where a<:Number
+function predict(filter::KalmanFilter, b0::GaussianBelief,
+            u::AbstractVector{<:Number})
 
     # Motion update
     μp = filter.d.A * b0.μ + filter.d.B * u
@@ -37,15 +37,16 @@ function predict(b0::GaussianBelief, u::AbstractVector{a},
 end
 
 """
-    measure(bp::GaussianBelief, y::AbstractVector, filter::KalmanFilter;
+    measure(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector;
         u::AbstractVector = [false])
 
 Uses Kalman filter to run measurement update on predicted gaussian belief bp,
 given measurement vector y. If u is specified and filter.o.D has been declared,
 then matrix D will be factored into the y predictions
 """
-function measure(bp::GaussianBelief, y::AbstractVector{a}, filter::KalmanFilter;
-                u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
+function measure(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
+                u::AbstractVector{<:Number} = [false])
+
     # Kalman Gain
     K = bp.Σ * filter.o.C' *
         inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
@@ -69,16 +70,16 @@ end
 ### Simulation functions ###
 
 """
-    simulation(b0::GaussianBelief,action_sequence::Vector{AbstractVector}},
-        filter::AbstractFilter)
+    simulation(filter::AbstractFilter, b0::GaussianBelief,
+                action_sequence::Vector{AbstractVector}})
 
 Run a simulation to get positions and measurements. Samples starting point from
 GaussianBelief b0, the runs action_sequence with additive gaussian noise all
 specified by AbstractFilter filter to return a simulated state and measurement
 history.
 """
-function simulation(b0::GaussianBelief, action_sequence::Vector{T},
-    filter::AbstractFilter) where T<:AbstractArray
+function simulation(filter::AbstractFilter, b0::GaussianBelief,
+                    action_sequence::Vector{<:AbstractArray})
 
     # make initial state
     s0 = b0.μ + cholesky(b0.Σ).L * randn(size(b0.Σ,1))
@@ -87,7 +88,7 @@ function simulation(b0::GaussianBelief, action_sequence::Vector{T},
     state_history = [s0]
     measurement_history = Vector{AbstractVector{typeof(s0[1])}}()
     for u in action_sequence
-        xn, yn = simulate_step(state_history[end], u, filter)
+        xn, yn = simulate_step(filter, state_history[end], u)
         push!(state_history, xn)
         push!(measurement_history, yn)
     end
@@ -97,13 +98,13 @@ function simulation(b0::GaussianBelief, action_sequence::Vector{T},
 end
 
 """
-    simulate_step(x::AbstractVector, u::AbstractVector, filter::KalmanFilter)
+    simulate_step(filter::KalmanFilter, x::AbstractVector, u::AbstractVector)
 
 Run a step of simulation starting at state x, taking action u, and using the
 motion and measurement equations specified by Kalman Filter filter.
 """
-function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
-    filter::KalmanFilter) where {a<:Number, b<:Number}
+function simulate_step(filter::KalmanFilter, x::AbstractVector{<:Number},
+                        u::AbstractVector{<:Number})
 
     # Linear Motion
     xn = filter.d.A * x + filter.d.B * u +
@@ -120,16 +121,15 @@ function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
 end
 
 """
-    run_filter(b0::GaussianBelief, action_history::Vector{AbstractVector},
-            measurement_history::Vector{AbstractVector}, filter::AbstractFilter)
+    run_filter(filter::AbstractFilter, b0::GaussianBelief, action_history::Vector{AbstractVector},
+            measurement_history::Vector{AbstractVector})
 
 Given an initial belief b0, matched-size arrays for action and measurement
 histories and a filter, update the beliefs using the filter, and return a
 vector of all beliefs.
 """
-function run_filter(b0::GaussianBelief, action_history::Vector{A},
-            measurement_history::Vector{B},
-            filter::AbstractFilter) where {A<:AbstractVector, B<:AbstractVector}
+function run_filter(filter::AbstractFilter, b0::GaussianBelief, action_history::Vector{A},
+            measurement_history::Vector{B}) where {A<:AbstractVector, B<:AbstractVector}
 
         # assert matching action and measurement sizes
         @assert length(action_history) == length(measurement_history)
@@ -139,7 +139,7 @@ function run_filter(b0::GaussianBelief, action_history::Vector{A},
 
         # iterate through and update beliefs
         for (u, y) in zip(action_history, measurement_history)
-            bn = update(beliefs[end], u, y, filter)
+            bn = update(filter, beliefs[end], u, y)
             push!(beliefs, bn)
         end
 
@@ -147,7 +147,7 @@ function run_filter(b0::GaussianBelief, action_history::Vector{A},
 end
 
 """
-    unpack(belief_history::Vector{GaussianBelief};
+    unpack(belief_history::Vector{<:GaussianBelief};
         dims::Vector{Int}=[])
 
 Given a history of beliefs, return an unpacked (time steps, state dim)-sized array of
@@ -155,8 +155,8 @@ predicted means and a (time steps, state dim, state dim)-sized array of
 covariances. One can optionally specify dimensions indices dims to output
 reduced state information.
 """
-function unpack(belief_history::Vector{GaussianBelief{a,b}};
-    dims::Vector{Int}=Vector{Int}()) where {a<:Number, b<:Number}
+function unpack(belief_history::Vector{<:GaussianBelief};
+    dims::Vector{Int}=Vector{Int}())
 
     # set default to condense all dimensions
     if length(dims) == 0

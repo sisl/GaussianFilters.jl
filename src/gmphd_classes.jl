@@ -1,25 +1,25 @@
 """
-    Measurement(C::Matrix, R::Matrix)
+    Measurement(C::AbstractMatrix, R::AbstractMatrix)
 
 Construct measurement model with observation matrix C and sensor
 noise matrix R
 """
-struct Measurement{a,b}
-    C::Matrix{a}
-    R::Matrix{b}
+struct Measurement{A<:Number,B<:Number}
+    C::AbstractMatrix{A}
+    R::AbstractMatrix{B}
 end
 
 """
-    Dynamics(A::Matrix, Q::Matrix, d::Vector)
-    Dynamics(A::Matrix, Q::Matrix)
+    Dynamics(A::AbstractMatrix, Q::AbstractMatrix, d::AbstractVector)
+    Dynamics(A::AbstractMatrix, Q::AbstractMatrix)
 
 Construct linear dynamics model with; transition matrix A,
 process noise matrix Q and offset vector d
 """
-struct Dynamics{a,b,c}
-    A::Matrix{a}
-    Q::Matrix{b}
-    d::Vector{c}
+struct Dynamics{A<:Number,B<:Number,C<:Number}
+    A::AbstractMatrix{A}
+    Q::AbstractMatrix{B}
+    d::AbstractVector{C}
 end
 
 function Dynamics(A,Q)
@@ -28,9 +28,10 @@ function Dynamics(A,Q)
 end
 
 """
-    GaussianMixture(N::Int64, w::Vector{Float64}, μ::Vector{Vector},
-        Σ::Vector{Matrix})
-    GaussianMixture(w::Vector{Float64}, μ::Vector{Vector}, Σ::Vector{Matrix})
+    GaussianMixture(N::Int64, w::Vector{Number}, μ::Vector{AbstractVector},
+        Σ::Vector{AbstractMatrix})
+    GaussianMixture(w::Vector{Number}, μ::Vector{AbstractVector},
+        Σ::Vector{AbstractMatrix})
 
     Arguments:
     N: Number of models
@@ -40,12 +41,13 @@ end
 """
 struct GaussianMixture{T<:Number}
     N::Int64
-    w::Vector{Float64}
-    μ::Vector{Vector{T}}
-    Σ::Vector{Matrix{T}}
+    w::Vector{<:Number}
+    μ::Vector{<:AbstractVector{T}}
+    Σ::Vector{<:AbstractMatrix{T}}
 end
 
-function GaussianMixture(w, μ::Vector{Vector{T}}, Σ::Vector{Matrix{K}}) where {T,K}
+function GaussianMixture(w, μ::Vector{<:AbstractVector{T}},
+    Σ::Vector{<:AbstractMatrix{K}}) where {T<:Number,K<:Number}
     @assert length(μ) == length(Σ) == length(w) "Number
      of mixtures inconsistent"
     GaussianMixture{promote_type(T,K)}(length(w), w, μ, Σ)

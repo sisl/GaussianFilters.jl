@@ -1,27 +1,27 @@
 """
-    multiple_target_state_extraction(x::GaussianMixture, threshold::Real)
+    multiple_target_state_extraction(b::GaussianMixture, th::Real)
 
 Extracts targets whose weights (x.w) are above threshold.
 
 Arguments:
-    `x::GaussianMixture`: Set of Gaussian Mixtures
-    `threshold::Real`: Threshold on weights. Above this threshold,
+    `b::GaussianMixture`: Set of Gaussian Mixtures
+    `th::Real`: Threshold on weights. Above this threshold,
     state estimate is extracted
 
 Returns:
     X: Multi-Target State Estimate
 """
-function multiple_target_state_extraction(x::GaussianMixture, threshold::Real)
-    inds = x.w .> threshold
+function multiple_target_state_extraction(b::GaussianMixture, th::Real)
+    inds = b.w .> th
     N = sum(inds)
-    m = x.μ[inds]
-    w = x.w[inds]
+    m = b.μ[inds]
+    w = b.w[inds]
 
-    Xk = []
+    X = []
     for i = 1:N
         tmp = [m[i] for j = 1:round(w[i])]
-        Xk = vcat(Xk, tmp)
+        X = vcat(X, tmp)
     end
 
-    return Xk
+    return X
 end

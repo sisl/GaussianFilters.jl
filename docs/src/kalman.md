@@ -34,7 +34,7 @@ GaussianFilters.UnscentedKalmanFilter
 
 ## Simulating Data
 
-Given an initial belief, an action sequence, and a filter, you can either simulate state and measurement data all at once with `simulation` or one step at a time with `simulate_step`
+Given a filter, an initial belief, and an action sequence, you can either simulate state and measurement data all at once with `simulation` or one step at a time with `simulate_step`
 
 ```@docs
 GaussianFilters.simulation

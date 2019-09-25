@@ -41,7 +41,7 @@ omodel = NonlinearObservationModel(measure, V)
 ukf = UnscentedKalmanFilter(dmodel, omodel)
 
 b0 = GaussianBelief([0, 0], [1 0; 0 1])
-b1 = update(b0, action, measurement, ukf)
+b1 = update(ukf, b0, action, measurement)
 ```
 
 See documentation and examples for more details.

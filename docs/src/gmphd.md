@@ -28,12 +28,13 @@ GaussianFilters.PHDFilter
 
 ## Running a GM-PHD Filter
 
-Currently, the GM-PHD Filter must be run step-by-step. Prediction and measurement steps are combined in `step`, while resulting low-probability mixture components are pruned with `prune`. These functions are combined in `step_prune`.
+Currently, the GM-PHD Filter must be run step-by-step. Similar to the Kalman-Class filters, this can be done with a single call to `update`, which wraps functions to `predict` the next state, perform a measurement update with `measure`, and `prune` the resulting mixture model of low-probability and sufficiently close mixtures.
 
 ```@docs
-GaussianFilters.step
+GaussianFilters.update
+GaussianFilters.predict
+GaussianFilters.measure
 GaussianFilters.prune
-GaussianFilters.step_prune
 ```
 Target locations can be extracted from a `GaussianMixture` state using `multiple_target_state_extraction`.
 

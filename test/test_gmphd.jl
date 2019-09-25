@@ -19,8 +19,8 @@ let
     @test phd1.dyn == phd2.dyn
 
     # Predict/Measure and test update
-    xp = predict(x0,phd1)
-    s = measure(xp,Z,phd1)
+    xp = predict(phd1, x0)
+    s = measure(phd1, xp, Z)
     @test s.N == 6
     array_isapprox(s.w, [0.5, 0.5, 0.25, 0.425012, 0.383326, 0.191663], atol=0.002)
     @test length(s.Σ) == s.N
@@ -36,7 +36,7 @@ let
     @test length(p.μ) == p.N
 
     # Test single step updating
-    sp = update(x0, Z, phd1, T, U, J_max)
+    sp = update(phd1, x0, Z, T, U, J_max)
     @test sp.w == p.w
     @test sp.μ == p.μ
 
@@ -129,7 +129,7 @@ let
     for t = 1:Δ:Tf
         MVD = MvNormal(Meas.R)
         z = [ Meas.C*xsim[t][i] + rand(MVD,1)[:] for i=1:length(xsim[t])]
-        x_new_pruned = update(x[t],z,phd,T,U,J_max)
+        x_new_pruned = update(phd,x[t],z,T,U,J_max)
         push!(x, x_new_pruned)
     end
 

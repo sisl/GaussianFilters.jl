@@ -37,10 +37,10 @@ action_sequence = [[0.0,0.0,0.0] for t in times]
 
 b0 = GaussianBelief([10.0,0.0,0.0], Matrix{Float64}(I,3,3))
 
-sim_states, sim_measurements = simulation(b0,action_sequence,ekf)
+sim_states, sim_measurements = simulation(ekf,b0,action_sequence)
 
 # Filter
-filtered_beliefs = run_filter(b0, action_sequence, sim_measurements, ekf)
+filtered_beliefs = run_filter(ekf, b0, action_sequence, sim_measurements)
 μ, Σ = unpack(filtered_beliefs)
 
 # Tests
@@ -49,9 +49,9 @@ filtered_beliefs = run_filter(b0, action_sequence, sim_measurements, ekf)
 @test length(sim_measurements) == length(action_sequence)
 
 
-first_update = update(b0, action_sequence[1], sim_measurements[1], ekf)
-first_predict = predict(b0, action_sequence[1], ekf)
-first_predict_measure = measure(first_predict, sim_measurements[1], ekf, u = action_sequence[1])
+first_update = update(ekf, b0, action_sequence[1], sim_measurements[1])
+first_predict = predict(ekf, b0, action_sequence[1])
+first_predict_measure = measure(ekf, first_predict, sim_measurements[1], u = action_sequence[1])
 array_isapprox(first_update.μ, first_predict_measure.μ)
 array_isapprox(first_update.Σ, first_predict_measure.Σ)
 
