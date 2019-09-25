@@ -25,10 +25,10 @@ times = 0:dt:10
 Fmag = 1000
 action_sequence = [[Fmag*cos(t), Fmag*sin(t)] for t in times]
 
-sim_states, sim_measurements = simulation(b0,action_sequence,kf);
+sim_states, sim_measurements = simulation(kf, b0,action_sequence);
 
 # Filter
-filtered_beliefs = run_filter(b0, action_sequence, sim_measurements, kf)
+filtered_beliefs = run_filter(kf, b0, action_sequence, sim_measurements)
 μ, Σ = unpack(filtered_beliefs);
 
 # Tests
@@ -36,9 +36,9 @@ filtered_beliefs = run_filter(b0, action_sequence, sim_measurements, kf)
 @test kf.o isa LinearObservationModel
 @test length(sim_measurements) == length(action_sequence)
 
-first_update = update(b0, action_sequence[1], sim_measurements[1], kf)
-first_predict_measure = measure(predict(b0, action_sequence[1], kf),
-    sim_measurements[1], kf; u = action_sequence[1])
+first_update = update(kf, b0, action_sequence[1], sim_measurements[1])
+first_predict_measure = measure(kf, predict(kf, b0, action_sequence[1]),
+    sim_measurements[1]; u = action_sequence[1])
 array_isapprox(first_update.μ, first_predict_measure.μ)
 array_isapprox(first_update.Σ, first_predict_measure.Σ)
 

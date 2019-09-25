@@ -75,13 +75,12 @@ end
 # Unscented Kalman Filter functions
 
 """
-    predict(b0::GaussianBelief, u::AbstractVector, filter::UnscentedKalmanFilter)
+    predict(filter::UnscentedKalmanFilter, b0::GaussianBelief, u::AbstractVector)
 
 Uses Unscented Kalman filter to run prediction step on gaussian belief b0,
 given control vector u.
 """
-function predict(b0::GaussianBelief, u::AbstractVector{a},
-            filter::UnscentedKalmanFilter) where a<:Number
+function predict(filter::UnscentedKalmanFilter, b0::GaussianBelief, u::AbstractVector{<:Number})
 
     # Motion update
 
@@ -120,14 +119,14 @@ function predict(b0::GaussianBelief, u::AbstractVector{a},
 end
 
 """
-    measure(bp::GaussianBelief, y::AbstractVector, filter::UnscentedKalmanFilter;
+    measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector;
         u::AbstractVector = [false])
 
 Uses Unscented Kalman filter to run measurement update on predicted gaussian
 belief bp, given measurement vector y. If u is specified and filter.o.D has
 been declared, then matrix D will be factored into the y predictions.
 """
-function measure(bp::GaussianBelief, y::AbstractVector{a}, filter::UnscentedKalmanFilter;
+function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector{a};
                 u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
 
     # Measurement update
@@ -186,13 +185,13 @@ end
 
 ### Simulation function ###
 """
-    simulate_step(x::AbstractVector, u::AbstractVector, filter::UnscentedKalmanFilter)
+    simulate_step(filter::UnscentedKalmanFilter, x::AbstractVector, u::AbstractVector)
 
 Run a step of simulation starting at state x, taking action u, and using the
 motion and measurement equations specified by Kalman Filter filter.
 """
-function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
-    filter::UnscentedKalmanFilter) where {a<:Number, b<:Number}
+function simulate_step(filter::UnscentedKalmanFilter, x::AbstractVector{<:Number},
+                u::AbstractVector{<:Number})
 
     # Motion
 

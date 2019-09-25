@@ -1,13 +1,13 @@
 # Extended Kalman filter functions
 
 """
-    predict(b0::GaussianBelief, u::AbstractVector, filter::ExtendedKalmanFilter)
+    predict(filter::ExtendedKalmanFilter, b0::GaussianBelief, u::AbstractVector)
 
 Uses Extended Kalman filter to run prediction step on gaussian belief b0,
 given control vector u.
 """
-function predict(b0::GaussianBelief, u::AbstractVector{a},
-            filter::ExtendedKalmanFilter) where a<:Number
+function predict(filter::ExtendedKalmanFilter, b0::GaussianBelief,
+                u::AbstractVector{<:Number})
 
     # Motion update
 
@@ -35,14 +35,14 @@ function predict(b0::GaussianBelief, u::AbstractVector{a},
 end
 
 """
-    measure(bp::GaussianBelief, y::AbstractVector, filter::ExtendedKalmanFilter;
+    measure(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVector;
         u::AbstractVector = [false])
 
 Uses Extended Kalman filter to run measurement update on predicted gaussian
 belief bp, given measurement vector y. If u is specified and filter.o.D has
 been declared, then matrix D will be factored into the y predictions.
 """
-function measure(bp::GaussianBelief, y::AbstractVector{a}, filter::ExtendedKalmanFilter;
+function measure(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVector{a};
                 u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
 
     # Measurement update
@@ -88,13 +88,13 @@ end
 
 ### Simulation function ###
 """
-    simulate_step(x::AbstractVector, u::AbstractVector, filter::ExtendedKalmanFilter)
+    simulate_step(filter::ExtendedKalmanFilter, x::AbstractVector, u::AbstractVector)
 
 Run a step of simulation starting at state x, taking action u, and using the
 motion and measurement equations specified by Kalman Filter filter.
 """
-function simulate_step(x::AbstractVector{a}, u::AbstractVector{b},
-    filter::ExtendedKalmanFilter) where {a<:Number, b<:Number}
+function simulate_step(filter::ExtendedKalmanFilter, x::AbstractVector{<:Number},
+    u::AbstractVector{<:Number})
 
     # Motion
 
