@@ -7,7 +7,6 @@ os:
 
 julia:
   - 1.0
-  - 1.1
   - 1.2
   - nightly
 
@@ -16,8 +15,11 @@ notifications:
 
 matrix:
   allow_failures:
-    - julia: 1.1
     - julia: nightly
+
+after_success:
+  - julia --project -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia --project -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
 
 jobs:
   include:
@@ -29,32 +31,3 @@ jobs:
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
       after_success: skip
-
-# After successfuly build submit coverage report and deploy updated documentation
-# But limit deployment to the linux worker so this is done only once.
-
-# Uncomment once repo made public
-# after_success:
-#   # Install required packages for coverage and documentation
-#   - julia --project -e 'import Pkg; Pkg.add("Coverage");'
-#
-#   # Submit test coverage report
-#   - julia --project -e 'using Coverage; Coveralls.submit(Coveralls.process_folder())'
-#
-#     # Install TeX and Qt5 to build plots for documentation
-#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install qt5; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install basictex; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq x11-apps libxt6 libxrender1 libxext6 libgl1-mesa-glx qtbase5-dev qtdeclarative5-dev; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y --no-install-recommends texlive-fonts-recommended texlive-latex-extra texlive-fonts-extra dvipng texlive-latex-recommended; fi
-#   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export GKSwstype=svg; fi
-#
-#   # Install packages required for documentation generation
-#   - julia --project -e 'import Pkg; Pkg.add("Documenter"); Pkg.add("DocumenterTools");'
-#   - julia --project -e 'import Pkg; Pkg.add("Plots");'
-#   - julia --project -e 'import Pkg; Pkg.add("LaTeXStrings");'
-#
-#   # Build and deploy documentation
-#   - julia --project ./docs/make.jl
