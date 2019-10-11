@@ -45,6 +45,10 @@ end
 @time @testset "GaussianFilter Package Tests" begin
     testdir = joinpath(dirname(@__DIR__), "test")
 
+    @time @testset "Models Tests" begin
+        include(joinpath(testdir, "test_models.jl"))
+    end
+
     @time @testset "GaussianFilter GM-PHD Testing" begin
         include(joinpath(testdir, "test_gmphd.jl"))
     end

@@ -15,6 +15,11 @@ export
 	ObservationModel,
 	LinearObservationModel,
 	NonlinearObservationModel,
+	predict,
+	measure
+include("models.jl")
+
+export
 	AbstractFilter,
 	KalmanFilter,
 	ExtendedKalmanFilter,
@@ -24,8 +29,6 @@ include("kf_classes.jl")
 
 export
 	update,
-	predict,
-	measure,
 	simulation,
 	simulate_step,
 	run_filter,
