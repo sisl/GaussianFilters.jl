@@ -2,7 +2,9 @@
 using Test
 using Random
 using Logging
-using LinearAlgebra, Distributions
+using LinearAlgebra
+using Distributions
+using NBInclude
 
 # Package Under Test
 using GaussianFilters
@@ -63,6 +65,18 @@ end
 
     @time @testset "GaussianFilter UKF Testing" begin
         include(joinpath(testdir, "test_ukf.jl"))
+    end
+
+    @testset "Notebooks testing" begin 
+        nbdir = joinpath(dirname(@__DIR__), "notebooks")
+        for d in readdir(nbdir)
+            if endswith(d, ".ipynb")
+                path = joinpath(nbdir, d)
+                @testset "$d" begin
+                    @nbinclude path
+                end
+            end
+        end
     end
 
 end

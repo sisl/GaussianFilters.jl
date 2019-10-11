@@ -45,9 +45,9 @@ In addition, the dynamics and observation models can be queried on a single stat
 
 ```@docs 
     predict(::LinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
-    predict(::NonLinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+    predict(::NonlinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
     measure(::LinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
-    measure(::LinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+    measure(::NonlinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
 ```
 
 ## Running a Filter
