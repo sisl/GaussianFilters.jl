@@ -12,11 +12,11 @@ The documentation for the package can be found here: <https://sisl.github.io/Gau
 
 ## Installation
 
-GaussianFilters is not yet a registered Julia package. In the meantime it can be installed by running:
+GaussianFilters can be installed by running:
 
 ```julia
 using Pkg
-Pkg.add(PackageSpec(url="https://github.com/sisl/GaussianFilters.jl"))
+Pkg.add("GaussianFilters")
 ```
 
 ## Basic Usage
