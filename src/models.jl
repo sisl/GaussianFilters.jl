@@ -58,6 +58,10 @@ function predict(m::LinearDynamicsModel, x::AbstractVector{T},
     return m.A * x + m.B * u + cholesky(m.W).L * randn(rng, T, size(m.W, 1))
 end
 
+function jacobian(m::LinearDynamicsModel, x, u)
+    return m.A
+end
+
 """
     LinearObservationModel(C::AbstractMatrix,D::AbstractMatrix,V::Symmetric)
     LinearObservationModel(C::AbstractMatrix,D::AbstractMatrix,V::AbstractMatrix)
@@ -110,6 +114,10 @@ function measure(m::LinearObservationModel, x::AbstractVector{T},
     return m.C * x + m.D * u + cholesky(m.V).L * randn(rng, T, size(m.V, 1))
 end
 
+function jacobian(m::LinearObservationModel, x, u)
+    m.C
+end
+
 """
     NonlinearDynamicsModel(f::Function,W::Symmetric)
     NonlinearDynamicsModel(f::Function,W::AbstractMatrix)
@@ -143,6 +151,10 @@ function predict(m::NonlinearDynamicsModel, x::AbstractVector{T},
     return m.f(x, u) + cholesky(m.W).L * randn(rng, T, size(m.W, 1))
 end
 
+function jacobian(m::NonlinearDynamicsModel, x::AbstractVector, u::AbstractVector)
+    return ForwardDiff.jacobian(μ -> m.f(μ, u), x)
+end
+
 """
     NonlinearObservationModel(h::Function,V::Symmetric)
     NonlinearObservationModel(h::Function,V::AbstractMatrix)
@@ -174,4 +186,8 @@ function measure(m::NonlinearObservationModel, x::AbstractVector{T},
                  u::AbstractVector{T}, 
                  rng::AbstractRNG) where T<:Number
     return m.h(x, u) + cholesky(m.V).L * randn(rng, T, size(m.V, 1))
+end
+
+function jacobian(m::NonlinearObservationModel, x::AbstractVector, u::AbstractVector)
+    return ForwardDiff.jacobian(μ -> m.h(μ, u), x)
 end

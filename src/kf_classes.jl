@@ -89,3 +89,7 @@ end
 function GaussianBelief(μ::AbstractVector,Σ::AbstractMatrix)
     return GaussianBelief(μ,Symmetric(Σ))
 end
+
+function Base.rand(rng::AbstractRNG, b::GaussianBelief)
+    return b.μ + cholesky(b.Σ).L * randn(size(b.Σ,1))
+end
