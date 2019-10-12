@@ -67,16 +67,16 @@ end
         include(joinpath(testdir, "test_ukf.jl"))
     end
 
-    # @testset "Notebooks testing" begin 
-    #     nbdir = joinpath(dirname(@__DIR__), "notebooks")
-    #     for d in readdir(nbdir)
-    #         if endswith(d, ".ipynb")
-    #             path = joinpath(nbdir, d)
-    #             @testset "$d" begin
-    #                 @nbinclude path
-    #             end
-    #         end
-    #     end
-    # end
+    @testset "Notebooks testing" begin 
+        nbdir = joinpath(dirname(@__DIR__), "notebooks")
+        for d in readdir(nbdir)
+            if endswith(d, ".ipynb")
+                path = joinpath(nbdir, d)
+                @testset "$d" begin
+                    @nbinclude path
+                end
+            end
+        end
+    end
 
 end
