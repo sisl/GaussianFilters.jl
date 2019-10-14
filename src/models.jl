@@ -125,8 +125,8 @@ end
 Construct nonlinear dynamics model with transition function f
 and symmetric zero-mean process noise with symmetric covariance matrix W
 """
-struct NonlinearDynamicsModel{c<:Symmetric} <: DynamicsModel
-    f::Function
+struct NonlinearDynamicsModel{F<:Function, c<:Symmetric} <: DynamicsModel
+    f::F
     W::c
 end
 
@@ -162,8 +162,8 @@ end
 Construct nonlinear observation dynamics model with measurement function h
 and symmetric zero-mean measurement noise with symmetric covariance matrix V
 """
-struct NonlinearObservationModel{c<:Symmetric} <: ObservationModel
-    h::Function
+struct NonlinearObservationModel{F<:Function, c<:Symmetric} <: ObservationModel
+    h::F
     V::c
 end
 

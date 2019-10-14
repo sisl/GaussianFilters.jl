@@ -23,6 +23,7 @@
     @test x2[1] > 1.0
 
     o1 = measure(om, x0, u0)
+    @inferred measure(om, x0, u0)
     @test o1 == [1.0, 1.0, 1.0]
     o2 = measure(om, x0, u0, rng)
 end
@@ -43,11 +44,13 @@ end
     u0 = ones(4)
 
     x1 = predict(dm, x0, u0)
+    @inferred predict(dm, x0, u0)
     @test x1 == 2*ones(4)
     x2 = predict(dm, x1, u0, rng) 
     @test all(i -> i != 5.0, x2)
 
     o1 = measure(om, x0, u0)
+    @inferred measure(om, x0, u0)
     @test o1 == x0
     o2 = measure(om, x0, u0, rng)
     @test all(x -> !isapprox(x, 1.0), o2)
