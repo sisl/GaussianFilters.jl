@@ -15,21 +15,29 @@ export
 	ObservationModel,
 	LinearObservationModel,
 	NonlinearObservationModel,
+	predict,
+	measure
+include("models.jl")
+
+
+export
 	AbstractFilter,
 	KalmanFilter,
 	ExtendedKalmanFilter,
 	UnscentedKalmanFilter,
 	GaussianBelief
+
 include("kf_classes.jl")
 
-export
-	update,
-	predict,
-	measure,
-	simulation,
+export 
 	simulate_step,
+	simulation,
 	run_filter,
 	unpack
+
+include("simulate.jl")
+
+export	update
 include("kf.jl")
 include("ekf.jl")
 
@@ -62,7 +70,6 @@ include("gmphd_extraction.jl")
 # TODO: Add Labeled Multi-Bernoulli Filter
 
 # Utilities
-
 export
 	belief_ellipse
 include("utils.jl")

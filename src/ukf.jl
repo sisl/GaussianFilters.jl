@@ -90,24 +90,7 @@ function predict(filter::UnscentedKalmanFilter, b0::GaussianBelief, u::AbstractV
     points, w_μ, w_Σ = unscented_transform(b0, filter.λ, filter.α, filter.β)
 
     # iterate over each sigma point and propagate it through motion function
-    pointsp = Vector{Vector{Number}}()
-    for point in points
-
-        # Linear motion
-        if filter.d isa LinearDynamicsModel
-            push!(pointsp, filter.d.A * point + filter.d.B * u)
-
-        # Nonlinear motion
-        elseif filter.d isa NonlinearDynamicsModel
-
-            # Nonlinear predicted motion
-            push!(pointsp, filter.d.f(point, u))
-
-        else
-            error("Unsupported EKF Dynamics Model Type: " *
-                string(typeof(filter.d)))
-        end
-    end
+    pointsp = [predict(filter.d, point, u) for point in points]
 
     # apply inverse unscented transform to approximate new Gaussian
     bp = unscented_transform_inverse(pointsp, w_μ, w_Σ)
@@ -135,36 +118,8 @@ function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractV
     points, w_μ, w_Σ = unscented_transform(bp, filter.λ, filter.α, filter.β)
 
     # iterate over sigma points and computed expected measurement
-    ysp = Vector{Vector{Number}}()
-    for point in points
-
-        # Linear measurement
-        if filter.o isa LinearObservationModel
-
-            # Linear predicted measurement
-            yp = filter.o.C * point
-            if !(filter.o.D[1,1] isa Bool)
-                if u[1]==false
-                    @warn "D matrix specified in measurement model but not being used"
-                else
-                    yp = yp + filter.o.D * u
-                end
-            end
-            push!(ysp, yp)
-
-        # Nonlinear measurement
-        elseif filter.o isa NonlinearObservationModel
-
-            # Nonlinear predicted measurement
-            push!(ysp,filter.o.h(point, u))
-
-        else
-            error("Unsupported EKF Observation Model Type: " *
-                string(typeof(filter.o)))
-        end
-
-    end
-
+    ysp = [measure(filter.o, point, u) for point in points]
+    
     # compute expected measurement
     yp = sum(ysp .* w_μ)
 
@@ -181,53 +136,4 @@ function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractV
     μn = bp.μ + Σ_XY * inv(Σ_Y) * (y - yp)
     Σn = bp.Σ - Σ_XY * inv(Σ_Y) * Σ_XY'
     return GaussianBelief(μn, Σn)
-end
-
-### Simulation function ###
-"""
-    simulate_step(filter::UnscentedKalmanFilter, x::AbstractVector, u::AbstractVector)
-
-Run a step of simulation starting at state x, taking action u, and using the
-motion and measurement equations specified by Kalman Filter filter.
-"""
-function simulate_step(filter::UnscentedKalmanFilter, x::AbstractVector{<:Number},
-                u::AbstractVector{<:Number})
-
-    # Motion
-
-    xn = cholesky(filter.d.W).L * randn(size(filter.d.W,1))
-
-    # Linear Motion
-    if filter.d isa LinearDynamicsModel
-        xn += filter.d.A * x + filter.d.B * u
-
-    # Nonlinear Motion
-    elseif filter.d isa NonlinearDynamicsModel
-        xn += filter.d.f(x,u)
-
-    else
-        error("Unsupported UKF Dynamics Model Type: " *
-            string(typeof(filter.d)))
-    end
-
-    # Measurement
-
-    yn = cholesky(filter.o.V).L * randn(size(filter.o.V,1))
-
-    # Linear Measurement
-    if filter.o isa LinearObservationModel
-        yn += filter.o.C * xn
-        if !(filter.o.D[1,1] isa Bool)
-            yn += filter.o.D * u
-        end
-
-    # Nonlinear Measurement
-    elseif filter.o isa NonlinearObservationModel
-        yn += filter.o.h(xn,u)
-    else
-        error("Unsupported UKF Observation Model Type: " *
-            string(typeof(filter.o)))
-    end
-
-    return xn, yn
 end

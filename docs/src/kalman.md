@@ -40,6 +40,16 @@ Given a filter, an initial belief, and an action sequence, you can either simula
 GaussianFilters.simulation
 GaussianFilters.simulate_step
 ```
+
+In addition, the dynamics and observation models can be queried on a single state control input using the `predict` and `measure` methods respectively.
+
+```@docs 
+    predict(::LinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+    predict(::NonlinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+    measure(::LinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+    measure(::NonlinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+```
+
 ## Running a Filter
 
 You can run a filter on a sequential measurement data using the `run_filter` function.
