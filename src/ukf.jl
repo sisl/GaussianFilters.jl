@@ -62,10 +62,10 @@ function unscented_transform_inverse(points::Vector{A}, w_μ::Vector{B},
     w_Σ::Vector{C}) where {A<:AbstractVector, B<:Number, C<:Number}
 
     # calculate weighted mean
-    μ = sum(points .* w_μ)
+    μ = reduce(hcat, points) * w_μ
 
     # calculated weighted covariance
-    diff = hcat(points...) .- μ
+    diff = reduce(hcat, points) .- μ
     scaled = diff .* sqrt.(w_Σ)'
     Σ = scaled * scaled'
 
