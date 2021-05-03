@@ -16,7 +16,7 @@ abstract type ObservationModel end
     LinearDynamicsModel(A::AbstractMatrix,B::AbstractMatrix,W::Symmetric)
     LinearDynamicsModel(A::AbstractMatrix,B::AbstractMatrix,W::AbstractMatrix)
 
-Construct linear dynamics model with; transition matrix A,
+Construct linear dynamics model with transition matrix A,
 control matrix B, and symmetric zero-mean process noise with
 symmetric covariance matrix W
 """
@@ -68,8 +68,8 @@ end
     LinearObservationModel(C::AbstractMatrix,V::Symmetric)
     LinearObservationModel(C::AbstractMatrix,V::AbstractMatrix)
 
-Construct linear observation dynamics model with; transition matrix C,
-control matrix B, and symmetric zero-mean measurement noise with
+Construct linear observation dynamics model with output matrix C,
+feedthrough matrix D, and symmetric zero-mean measurement noise with
 symmetric covariance matrix V
 """
 struct LinearObservationModel{a<:AbstractMatrix,b<:AbstractMatrix,c<:Symmetric} <: ObservationModel
@@ -172,8 +172,8 @@ function NonlinearObservationModel(h::Function, V::AbstractMatrix)
 end
 
 """
-    measure(m::LinearObservationModel, x::AbstractVector{<:Number}, u::AbstractVector{<:Number})
-    measure(m::LinearObservationModel, x::AbstractVector{T}, u::AbstractVector{T}, rng::AbstractRNG) where T<:Number
+    measure(m::NonlinearObservationModel, x::AbstractVector{<:Number}, u::AbstractVector{<:Number})
+    measure(m::NonlinearObservationModel, x::AbstractVector{T}, u::AbstractVector{T}, rng::AbstractRNG) where T<:Number
 
 Returns an observation of state x according to the non linear observation model m, with control inputs u.
 If rng is passed, adds additive Gaussian noise to the observation.
