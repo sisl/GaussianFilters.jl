@@ -37,8 +37,7 @@ function unscented_transform(b::GaussianBelief, λ::Number=2, α::Number=1,
     end
 
     # compute sigma points
-    points = []
-    push!(points,b.μ)
+    points = [b.μ]
     for i in 1:n
         push!(points, b.μ + sqrt(n+λ)*s[:,i])
         push!(points, b.μ - sqrt(n+λ)*s[:,i])
@@ -61,11 +60,12 @@ weighting, although this is not necessary.
 function unscented_transform_inverse(points::Vector{A}, w_μ::Vector{B},
     w_Σ::Vector{C}) where {A<:AbstractVector, B<:Number, C<:Number}
 
+    catpoints = reduce(hcat, points)
     # calculate weighted mean
-    μ = reduce(hcat, points) * w_μ
+    μ = catpoints * w_μ
 
     # calculated weighted covariance
-    diff = reduce(hcat, points) .- μ
+    diff = catpoints .- μ
     scaled = diff .* sqrt.(w_Σ)'
     Σ = scaled * scaled'
 
@@ -109,8 +109,8 @@ Uses Unscented Kalman filter to run measurement update on predicted gaussian
 belief bp, given measurement vector y. If u is specified and filter.o.D has
 been declared, then matrix D will be factored into the y predictions.
 """
-function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector{a};
-                u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
+function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
+                u::AbstractVector{<:Number} = [false])
 
     # Measurement update
 
@@ -120,20 +120,23 @@ function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractV
     # iterate over sigma points and computed expected measurement
     ysp = [measure(filter.o, point, u) for point in points]
     
+
+    catpoints = reduce(hcat, ysp)
     # compute expected measurement
-    yp = sum(ysp .* w_μ)
+    yp = catpoints * w_μ
 
     # compute marginal covariance components
-    ydiff = hcat(ysp...) .- yp
+    ydiff = catpoints .- yp
     scaled_ydiff = ydiff .* sqrt.(w_Σ)'
     Σ_Y = scaled_ydiff * scaled_ydiff' + filter.o.V
 
-    xdiff = hcat(points...) .- bp.μ
+    xdiff = reduce(hcat, points) .- bp.μ
     scaled_xdiff = xdiff .* sqrt.(w_Σ)'
     Σ_XY = scaled_xdiff * scaled_ydiff'
 
     # measurement update
-    μn = bp.μ + Σ_XY * inv(Σ_Y) * (y - yp)
-    Σn = bp.Σ - Σ_XY * inv(Σ_Y) * Σ_XY'
+    K = Σ_XY / Σ_Y
+    μn = bp.μ + K * (y - yp)
+    Σn = bp.Σ - K * Σ_XY'
     return GaussianBelief(μn, Σn)
 end

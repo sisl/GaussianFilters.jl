@@ -41,6 +41,8 @@ filtered_beliefs = run_filter(ukf, b0, action_sequence, sim_measurements)
 @test ukf.o isa NonlinearObservationModel
 @test length(sim_measurements) == length(action_sequence)
 
+points, w_μ, w_Σ = @inferred unscented_transform(b0, ukf.λ, ukf.α, ukf.β)
+bp = @inferred unscented_transform_inverse(points, w_μ, w_Σ)
 
 first_update = update(ukf, b0, action_sequence[1], sim_measurements[1])
 first_predict = predict(ukf, b0, action_sequence[1])

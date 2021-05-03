@@ -74,9 +74,9 @@ end
 Construct a gaussian belief, consisting of mean vector μ
 and symmetric covariance matrix Σ
 """
-struct GaussianBelief{a<:Number,b<:Number}
-    μ::AbstractVector{a}
-    Σ::Symmetric{b}
+struct GaussianBelief{T<:AbstractVector{<:Number}, S<:Symmetric{<:Number}}
+    μ::T
+    Σ::S
     #=
     function GaussianBelief{a,b}(μ::Vector{a},
         Σ::Symmetric{b}) where {a<:Number,b<:Number}
