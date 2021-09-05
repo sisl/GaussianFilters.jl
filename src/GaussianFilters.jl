@@ -4,7 +4,7 @@ module GaussianFilters
 using LinearAlgebra
 using ForwardDiff
 using Random
-import Random: rand
+import POMDPs
 
 # Kalman, Extended Kalman, Unscented Kalman Filters
 

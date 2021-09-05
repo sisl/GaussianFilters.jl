@@ -7,8 +7,12 @@
 Uses AbstractFilter filter to update gaussian belief b0, given control vector
 u and measurement vector y.
 """
-function update(filter::AbstractFilter, b0::GaussianBelief,
-                u::AbstractVector{<:Number}, y::AbstractVector{<:Number})
+function POMDPs.update(
+    filter::AbstractFilter,
+    b0::GaussianBelief,
+    u::AbstractVector{<:Number},
+    y::AbstractVector{<:Number},
+)
 
     # predict
     bp = predict(filter, b0, u)
@@ -19,6 +23,8 @@ function update(filter::AbstractFilter, b0::GaussianBelief,
     return bn
 end
 
+@deprecate update(filter::AbstractFilter, b::GaussianBelief, a, o) POMDPs.update(filter, b, a, o)
+
 # Kalman filter functions
 
 """
@@ -27,8 +33,7 @@ end
 Uses Kalman filter to run prediction step on gaussian belief b0, given control
 vector u.
 """
-function predict(filter::KalmanFilter, b0::GaussianBelief,
-            u::AbstractVector{<:Number})
+function predict(filter::KalmanFilter, b0::GaussianBelief, u::AbstractVector{<:Number})
 
     # Motion update
     μp = filter.d.A * b0.μ + filter.d.B * u
@@ -44,18 +49,21 @@ Uses Kalman filter to run measurement update on predicted gaussian belief bp,
 given measurement vector y. If u is specified and filter.o.D has been declared,
 then matrix D will be factored into the y predictions
 """
-function measure(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
-                u::AbstractVector{<:Number} = [false])
+function measure(
+    filter::KalmanFilter,
+    bp::GaussianBelief,
+    y::AbstractVector{<:Number};
+    u::AbstractVector{<:Number} = [false],
+)
 
     # Kalman Gain
-    K = bp.Σ * filter.o.C' *
-        inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
+    K = bp.Σ * filter.o.C' * inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
 
     # Predicted measurement
     yp = measure(filter.o, bp.μ, u)
 
     # Measurement update
-    μn = bp.μ + K * (y-yp)
+    μn = bp.μ + K * (y - yp)
     Σn = (I - K * filter.o.C) * bp.Σ
     return GaussianBelief(μn, Σn)
 end
