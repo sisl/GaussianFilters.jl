@@ -19,6 +19,18 @@ function update(filter::AbstractFilter, b0::GaussianBelief,
     return bn
 end
 
+function update_with_innov_cov(filter::AbstractFilter, b0::GaussianBelief,
+    u::AbstractVector{<:Number}, y::AbstractVector{<:Number})
+
+    # predict
+    bp = predict(filter, b0, u)
+
+    # measure
+    bn, Σ_Y = measure_with_innov_cov(filter, bp, y; u = u)
+
+    return bn, Σ_Y
+end
+
 # Kalman filter functions
 
 """
@@ -58,4 +70,20 @@ function measure(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:N
     μn = bp.μ + K * (y-yp)
     Σn = (I - K * filter.o.C) * bp.Σ
     return GaussianBelief(μn, Σn)
+end
+
+function measure_with_innov_cov(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
+    u::AbstractVector{<:Number} = [false])
+
+    # Kalman Gain
+    ΣY = filter.o.C * bp.Σ * filter.o.C' + filter.o.V
+    K = bp.Σ * filter.o.C' * inv(ΣY)
+
+    # Predicted measurement
+    yp = measure(filter.o, bp.μ, u)
+
+    # Measurement update
+    μn = bp.μ + K * (y-yp)
+    Σn = (I - K * filter.o.C) * bp.Σ
+    return GaussianBelief(μn, Σn), Σ_Y
 end
