@@ -40,3 +40,20 @@ function measure(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVe
     Σn = (I - K * H) * bp.Σ
     return GaussianBelief(μn, Σn)
 end
+
+function measure_with_innov_cov(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVector{a};
+    u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
+
+    # Measurement update
+    yp = measure(filter.o, bp.μ, u)
+    H = jacobian(filter.o, bp.μ, u)
+
+    # Kalman Gain
+    Σ_Y = H * bp.Σ * H' + filter.o.V
+    K = bp.Σ * H' * inv(Σ_Y)
+
+    # Measurement update
+    μn = bp.μ + K * (y - yp)
+    Σn = (I - K * H) * bp.Σ
+    return GaussianBelief(μn, Σn), Σ_Y
+end

@@ -37,7 +37,10 @@ export
 
 include("simulate.jl")
 
-export	update
+export	
+	update,
+	update_with_innov_cov
+
 include("kf.jl")
 include("ekf.jl")
 
