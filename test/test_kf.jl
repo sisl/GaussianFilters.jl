@@ -1,4 +1,5 @@
-Random.seed!(0)
+# Random.seed!(0)
+rng = StableRNG(0)
 
 # Dynamics
 dt = 0.1
@@ -25,7 +26,7 @@ times = 0:dt:10
 Fmag = 1000
 action_sequence = [[Fmag*cos(t), Fmag*sin(t)] for t in times]
 
-sim_states, sim_measurements = simulation(kf, b0,action_sequence);
+sim_states, sim_measurements = simulation(kf, b0,action_sequence, rng);
 
 # Filter
 filtered_beliefs = run_filter(kf, b0, action_sequence, sim_measurements)
@@ -40,6 +41,7 @@ first_update = update(kf, b0, action_sequence[1], sim_measurements[1])
 first_predict_measure = measure(kf, predict(kf, b0, action_sequence[1]),
     sim_measurements[1]; u = action_sequence[1])
 array_isapprox(first_update.μ, first_predict_measure.μ)
+
 array_isapprox(first_update.Σ, first_predict_measure.Σ)
 
 @test length(filtered_beliefs[end].μ) == length(b0.μ)
@@ -48,11 +50,11 @@ array_isapprox(first_update.Σ, first_predict_measure.Σ)
 @test size(Σ) == (length(filtered_beliefs), size(filtered_beliefs[1].Σ)...)
 
 # change with algorithm / rng changes
-array_isapprox(sim_states[end], [59.9223, -7.17527, 178.149, 30.4653];atol=0.001)
-array_isapprox(sim_measurements[end], [-7.01552, 30.4259];atol=0.001)
-array_isapprox(filtered_beliefs[end].μ, [60.1627, -7.13376, 183.227, 30.3895];
+# @info("Values for test", sim_states[end], sim_measurements[end], filtered_beliefs[end].μ, filtered_beliefs[end].Σ)
+
+array_isapprox(sim_states[end], [98.92569494648434, -3.644139152469229, 247.30163635010385, 44.08105949503985]; atol=0.001)
+array_isapprox(sim_measurements[end], [-3.9598235926013814, 43.571078921455715]; atol=0.001)
+array_isapprox(filtered_beliefs[end].μ, [95.45866414957369, -4.222755472734632, 240.6036938459223, 44.10233946193025];
                 atol=0.001)
-array_isapprox(filtered_beliefs[end].Σ,   [12.6069 0.0320871 0.0 0.0;
-                                            0.0320871 0.179129 0.0 0.0;
-                                            0.0 0.0 12.6069 0.0320871;
-                                            0.0 0.0 0.0320871 0.179129]; atol=0.001)
+array_isapprox(filtered_beliefs[end].Σ,   
+[12.60691909451178 0.03208712152522081 0.0 0.0; 0.03208712152522081 0.17912878474779198 0.0 0.0; 0.0 0.0 12.60691909451178 0.03208712152522081; 0.0 0.0 0.03208712152522081 0.17912878474779198]; atol=0.001)
