@@ -19,14 +19,14 @@ function update(filter::AbstractFilter, b0::GaussianBelief,
     return bn
 end
 
-function update_with_innov_cov(filter::AbstractFilter, b0::GaussianBelief,
+function update_with_info(filter::AbstractFilter, b0::GaussianBelief,
     u::AbstractVector{<:Number}, y::AbstractVector{<:Number})
 
     # predict
     bp = predict(filter, b0, u)
 
     # measure
-    bn, Σ_Y = measure_with_innov_cov(filter, bp, y; u = u)
+    bn, Σ_Y = measure_info(filter, bp, y; u = u)
 
     return bn, Σ_Y
 end

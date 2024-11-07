@@ -39,7 +39,7 @@ include("simulate.jl")
 
 export	
 	update,
-	update_with_innov_cov
+	update_with_info
 
 include("kf.jl")
 include("ekf.jl")

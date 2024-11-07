@@ -142,7 +142,7 @@ function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractV
 end
 
 
-function measure_with_innov_cov(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
+function measure_info(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
     u::AbstractVector{<:Number} = [false])
 
     # Measurement update
