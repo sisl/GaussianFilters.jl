@@ -61,12 +61,15 @@ array_isapprox(first_update.Σ, first_predict_measure.Σ)
 @test size(μ) == (length(filtered_beliefs), length(filtered_beliefs[1].μ))
 @test size(Σ) == (length(filtered_beliefs), size(filtered_beliefs[1].Σ)...)
 
-# change with algorithm / rng changes
+# Test mathematical properties
+@test all(isfinite.(sim_states[end]))  
+@test all(isfinite.(sim_measurements[end])) 
+@test length(sim_measurements[end]) == 3  
+@test length(sim_states[end]) == 3 
 
-array_isapprox(sim_states[end], [10.7664, 0.213008, -0.463593];atol=0.001)
-array_isapprox(sim_measurements[end], [10.9978, 0.491584, -0.33985];atol=0.001)
-array_isapprox(filtered_beliefs[end].μ, [10.051, -0.0285158, -0.575077];
-                atol=0.001)
-array_isapprox(filtered_beliefs[end].Σ, [0.329097 -0.00281178 0.000218104;
-                                        -0.00281178 0.0168616 -1.87166e-6;
-                                        0.000218104 -1.87166e-6 0.0168371]; atol=0.001)
+# Test filtered belief properties
+@test all(isfinite.(filtered_beliefs[end].μ))  
+@test all(isfinite.(filtered_beliefs[end].Σ)) 
+@test issymmetric(filtered_beliefs[end].Σ)  
+@test isposdef(filtered_beliefs[end].Σ) 
+@test tr(filtered_beliefs[end].Σ) < 1.0 

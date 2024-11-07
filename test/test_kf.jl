@@ -1,4 +1,3 @@
-# Random.seed!(0)
 rng = StableRNG(0)
 
 # Dynamics
@@ -41,7 +40,6 @@ first_update = update(kf, b0, action_sequence[1], sim_measurements[1])
 first_predict_measure = measure(kf, predict(kf, b0, action_sequence[1]),
     sim_measurements[1]; u = action_sequence[1])
 array_isapprox(first_update.μ, first_predict_measure.μ)
-
 array_isapprox(first_update.Σ, first_predict_measure.Σ)
 
 @test length(filtered_beliefs[end].μ) == length(b0.μ)
@@ -58,3 +56,6 @@ array_isapprox(filtered_beliefs[end].μ, [95.45866414957369, -4.222755472734632,
                 atol=0.001)
 array_isapprox(filtered_beliefs[end].Σ,   
 [12.60691909451178 0.03208712152522081 0.0 0.0; 0.03208712152522081 0.17912878474779198 0.0 0.0; 0.0 0.0 12.60691909451178 0.03208712152522081; 0.0 0.0 0.03208712152522081 0.17912878474779198]; atol=0.001)
+
+@test issymmetric(filtered_beliefs[end].Σ)  
+@test isposdef(filtered_beliefs[end].Σ) 

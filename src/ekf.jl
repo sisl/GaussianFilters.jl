@@ -41,7 +41,7 @@ function measure(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVe
     return GaussianBelief(μn, Σn)
 end
 
-function measure_with_innov_cov(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVector{a};
+function measure_info(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::AbstractVector{a};
     u::AbstractVector{b} = [false]) where {a<:Number, b<:Number}
 
     # Measurement update
