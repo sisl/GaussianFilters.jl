@@ -47,9 +47,6 @@ array_isapprox(first_update.Σ, first_predict_measure.Σ)
 @test size(μ) == (length(filtered_beliefs), length(filtered_beliefs[1].μ))
 @test size(Σ) == (length(filtered_beliefs), size(filtered_beliefs[1].Σ)...)
 
-# change with algorithm / rng changes
-# @info("Values for test", sim_states[end], sim_measurements[end], filtered_beliefs[end].μ, filtered_beliefs[end].Σ)
-
 array_isapprox(sim_states[end], [98.92569494648434, -3.644139152469229, 247.30163635010385, 44.08105949503985]; atol=0.001)
 array_isapprox(sim_measurements[end], [-3.9598235926013814, 43.571078921455715]; atol=0.001)
 array_isapprox(filtered_beliefs[end].μ, [95.45866414957369, -4.222755472734632, 240.6036938459223, 44.10233946193025];
@@ -59,3 +56,11 @@ array_isapprox(filtered_beliefs[end].Σ,
 
 @test issymmetric(filtered_beliefs[end].Σ)  
 @test isposdef(filtered_beliefs[end].Σ) 
+
+_, info = update_with_info(kf, b0, action_sequence[1], sim_measurements[1])
+@test haskey(info, :innovation_cov)
+@test haskey(info, :kalman_gain) 
+@test haskey(info, :predicted_measurement)
+@test size(info.innovation_cov) == (2,2)
+@test size(info.kalman_gain) == (4,2)
+@test length(info.predicted_measurement) == 2

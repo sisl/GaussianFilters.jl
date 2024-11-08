@@ -171,5 +171,7 @@ function measure_info(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::Abst
     K = Σ_XY / Σ_Y
     μn = bp.μ + K * (y - yp)
     Σn = bp.Σ - K * Σ_XY'
-    return GaussianBelief(μn, Σn), Σ_Y
+
+    info = (innovation_cov = Σ_Y, kalman_gain = K, predicted_measurement = yp)
+    return GaussianBelief(μn, Σn), info
 end
