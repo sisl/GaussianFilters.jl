@@ -26,9 +26,9 @@ function update_with_info(filter::AbstractFilter, b0::GaussianBelief,
     bp = predict(filter, b0, u)
 
     # measure
-    bn, Σ_Y = measure_info(filter, bp, y; u = u)
+    bn, info = measure_info(filter, bp, y; u = u)
 
-    return bn, Σ_Y
+    return bn, info
 end
 
 # Kalman filter functions
