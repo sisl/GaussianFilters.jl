@@ -5,6 +5,7 @@ using Logging
 using LinearAlgebra
 using Distributions
 using NBInclude
+using StableRNGs
 
 # Package Under Test
 using GaussianFilters
@@ -16,7 +17,7 @@ global_logger(SimpleLogger(stderr, Logging.Debug))
 Random.seed!(0)
 
 # Check equality of two arrays
-@inline function array_isapprox(x::AbstractArray{F},
+function array_isapprox(x::AbstractArray{F},
                   y::AbstractArray{F};
                   rtol::F=sqrt(eps(F)),
                   atol::F=zero(F)) where {F<:AbstractFloat}
@@ -32,7 +33,7 @@ Random.seed!(0)
 end
 
 # Check if array equals a single value
-@inline function array_isapprox(x::AbstractArray{F},
+function array_isapprox(x::AbstractArray{F},
                   y::F;
                   rtol::F=sqrt(eps(F)),
                   atol::F=zero(F)) where {F<:AbstractFloat}
@@ -51,10 +52,6 @@ end
         include(joinpath(testdir, "test_models.jl"))
     end
 
-    @time @testset "GaussianFilter GM-PHD Testing" begin
-        include(joinpath(testdir, "test_gmphd.jl"))
-    end
-
     @time @testset "GaussianFilter KF Testing" begin
         include(joinpath(testdir, "test_kf.jl"))
     end
@@ -62,9 +59,12 @@ end
     @time @testset "GaussianFilter EKF Testing" begin
         include(joinpath(testdir, "test_ekf.jl"))
     end
-
+    
     @time @testset "GaussianFilter UKF Testing" begin
         include(joinpath(testdir, "test_ukf.jl"))
+    end
+    @time @testset "GaussianFilter GM-PHD Testing" begin
+        include(joinpath(testdir, "test_gmphd.jl"))
     end
 
     @testset "Notebooks testing" begin 
@@ -78,5 +78,4 @@ end
             end
         end
     end
-
 end

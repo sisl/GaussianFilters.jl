@@ -140,3 +140,38 @@ function measure(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractV
     Σn = bp.Σ - K * Σ_XY'
     return GaussianBelief(μn, Σn)
 end
+
+
+function measure_info(filter::UnscentedKalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
+    u::AbstractVector{<:Number} = [false])
+
+    # Measurement update
+
+    # approximate Gaussian belief with sigma points
+    points, w_μ, w_Σ = unscented_transform(bp, filter.λ, filter.α, filter.β)
+
+    # iterate over sigma points and computed expected measurement
+    ysp = [measure(filter.o, point, u) for point in points]
+
+
+    catpoints = reduce(hcat, ysp)
+    # compute expected measurement
+    yp = catpoints * w_μ
+
+    # compute marginal covariance components
+    ydiff = catpoints .- yp
+    scaled_ydiff = ydiff .* sqrt.(w_Σ)'
+    Σ_Y = scaled_ydiff * scaled_ydiff' + filter.o.V
+
+    xdiff = reduce(hcat, points) .- bp.μ
+    scaled_xdiff = xdiff .* sqrt.(w_Σ)'
+    Σ_XY = scaled_xdiff * scaled_ydiff'
+
+    # measurement update
+    K = Σ_XY / Σ_Y
+    μn = bp.μ + K * (y - yp)
+    Σn = bp.Σ - K * Σ_XY'
+
+    info = (innovation_cov = Σ_Y, kalman_gain = K, predicted_measurement = yp)
+    return GaussianBelief(μn, Σn), info
+end

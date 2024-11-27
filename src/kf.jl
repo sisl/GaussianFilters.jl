@@ -19,6 +19,18 @@ function update(filter::AbstractFilter, b0::GaussianBelief,
     return bn
 end
 
+function update_with_info(filter::AbstractFilter, b0::GaussianBelief,
+    u::AbstractVector{<:Number}, y::AbstractVector{<:Number})
+
+    # predict
+    bp = predict(filter, b0, u)
+
+    # measure
+    bn, info = measure_info(filter, bp, y; u = u)
+
+    return bn, info
+end
+
 # Kalman filter functions
 
 """
@@ -46,10 +58,15 @@ then matrix D will be factored into the y predictions
 """
 function measure(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
                 u::AbstractVector{<:Number} = [false])
+    return first(measure_info(filter, bp, y; u = u))
+end
+
+function measure_info(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:Number};
+    u::AbstractVector{<:Number} = [false])
 
     # Kalman Gain
-    K = bp.Σ * filter.o.C' *
-        inv(filter.o.C * bp.Σ * filter.o.C' + filter.o.V)
+    ΣY = filter.o.C * bp.Σ * filter.o.C' + filter.o.V
+    K = bp.Σ * filter.o.C' * inv(ΣY)
 
     # Predicted measurement
     yp = measure(filter.o, bp.μ, u)
@@ -57,5 +74,8 @@ function measure(filter::KalmanFilter, bp::GaussianBelief, y::AbstractVector{<:N
     # Measurement update
     μn = bp.μ + K * (y-yp)
     Σn = (I - K * filter.o.C) * bp.Σ
-    return GaussianBelief(μn, Σn)
+    
+    info = (innovation_cov = ΣY, kalman_gain = K, predicted_measurement = yp)
+
+    return GaussianBelief(μn, Σn), info
 end
