@@ -10,6 +10,7 @@ Self-contained example scripts demonstrating the filters in `GaussianFilters.jl`
 | `gmphd_surveillance.jl` | GM-PHD | Multi-target tracking in a surveillance region |
 | `gmphd_aircraft_carrier.jl` | GM-PHD | Aircraft carrier scenario with birth/spawn models |
 | `gmphd_tests.jl` | GM-PHD | Visualization helpers and pruning/merging demos |
+| `pomdps_integration.jl` | KF | Uses a `KalmanFilter` as a `POMDPs.jl` belief updater |
 
 ## Running
 
