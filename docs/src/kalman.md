@@ -8,6 +8,7 @@ The Kalman, Extended Kalman, and Unscented Kalman filters are used to estimate s
 
 ```@docs
 GaussianFilters.GaussianBelief
+GaussianFilters.AbstractFilter
 ```
 
 ## Building a Filter
@@ -17,6 +18,8 @@ In general, Kalman-class filters can be built with either linear or non-linear d
 NOTE: There is no need to define Jacobians for non-linear models, since this package uses automatic forward differentiation to compute Jacobians in real time. Just make sure the models are forward differentiable in all possible belief locations.
 
 ```@docs
+GaussianFilters.DynamicsModel
+GaussianFilters.ObservationModel
 GaussianFilters.LinearDynamicsModel
 GaussianFilters.LinearObservationModel
 GaussianFilters.NonlinearDynamicsModel
@@ -31,6 +34,13 @@ GaussianFilters.ExtendedKalmanFilter
 GaussianFilters.UnscentedKalmanFilter
 ```
 
+The UKF additionally exposes the sigma-point machinery used internally:
+
+```@docs
+GaussianFilters.unscented_transform
+GaussianFilters.unscented_transform_inverse
+```
+
 
 ## Simulating Data
 
@@ -43,11 +53,11 @@ GaussianFilters.simulate_step
 
 In addition, the dynamics and observation models can be queried on a single state control input using the `predict` and `measure` methods respectively.
 
-```@docs 
-    predict(::LinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
-    predict(::NonlinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
-    measure(::LinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
-    measure(::NonlinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+```@docs
+predict(::LinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+predict(::NonlinearDynamicsModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+measure(::LinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+measure(::NonlinearObservationModel, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
 ```
 
 ## Running a Filter
@@ -61,9 +71,13 @@ GaussianFilters.run_filter
 Alternatively, you can make step-wise belief updates using the `update` function, which consists of a two-step process to a) `predict` the next state given a known action and b) make measurement-based belief updates with `measure`.
 
 ```@docs
-GaussianFilters.update
-GaussianFilters.predict
-GaussianFilters.measure
+update(::AbstractFilter, ::GaussianBelief, ::AbstractVector{<:Number}, ::AbstractVector{<:Number})
+predict(::KalmanFilter, ::GaussianBelief, ::AbstractVector{<:Number})
+predict(::ExtendedKalmanFilter, ::GaussianBelief, ::AbstractVector{<:Number})
+predict(::UnscentedKalmanFilter, ::GaussianBelief, ::AbstractVector{<:Number})
+measure(::KalmanFilter, ::GaussianBelief, ::AbstractVector{<:Number})
+measure(::ExtendedKalmanFilter, ::GaussianBelief, ::AbstractVector{a}) where a<:Number
+measure(::UnscentedKalmanFilter, ::GaussianBelief, ::AbstractVector{<:Number})
 ```
 
 
@@ -83,10 +97,8 @@ GaussianFilters.belief_ellipse
 
 ## Examples
 
-Full implementation examples can be found in the `notebooks` folder of the repo:
+Full implementation examples can be found in the [`examples/`](https://github.com/sisl/GaussianFilters.jl/tree/master/examples) directory of the repo:
 
-[Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/KF_2DMotionExample.ipynb)
-
-[Extended Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/EKF_SpinningSatelliteExample.ipynb)
-
-[Unscented Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/UKF_NonholonomicRobot.ipynb)
+- [`kf_2d_motion.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/kf_2d_motion.jl) — Kalman Filter
+- [`ekf_spinning_satellite.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/ekf_spinning_satellite.jl) — Extended Kalman Filter
+- [`ukf_nonholonomic_robot.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/ukf_nonholonomic_robot.jl) — Unscented Kalman Filter

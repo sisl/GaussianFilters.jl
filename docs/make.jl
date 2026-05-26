@@ -5,7 +5,6 @@ makedocs(
     modules   = [GaussianFilters],
     format    = Documenter.HTML(),
     sitename  = "GaussianFilters",
-    warnonly  = [:docs_block, :missing_docs],
     pages     = ["Introduction" => [
                     "Basics" => "index.md",
                     "Installation" => "install.md"

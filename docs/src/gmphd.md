@@ -31,11 +31,18 @@ GaussianFilters.PHDFilter
 Currently, the GM-PHD Filter must be run step-by-step. Similar to the Kalman-Class filters, this can be done with a single call to `update`, which wraps functions to `predict` the next state, perform a measurement update with `measure`, and `prune` the resulting mixture model of low-probability and sufficiently close mixtures.
 
 ```@docs
-GaussianFilters.update
-GaussianFilters.predict
-GaussianFilters.measure
+update(::PHDFilter, ::GaussianMixture, ::Vector{<:AbstractVector{<:Number}}, ::Real, ::Real, ::Integer)
+predict(::PHDFilter, ::GaussianMixture)
+measure(::PHDFilter, ::GaussianMixture, ::Vector{<:AbstractVector{<:Real}})
 GaussianFilters.prune
 ```
+
+The GM-PHD update internally evaluates a multivariate normal density:
+
+```@docs
+GaussianFilters.MvNormalPDF
+```
+
 Target locations can be extracted from a `GaussianMixture` state using `multiple_target_state_extraction`.
 
 ```@docs
@@ -44,8 +51,8 @@ GaussianFilters.multiple_target_state_extraction
 
 ## Examples
 
-Full implementation examples can be found in the `notebooks` folder of the repo:
+Full implementation examples can be found in the [`examples/`](https://github.com/sisl/GaussianFilters.jl/tree/master/examples) directory of the repo:
 
-[GM-PHD Object Surveillance Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/GMPHD_SurveillanceExample.ipynb)
-
-[GM-PHD Aircraft Carrier Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/GMPHD_AircraftCarrierExample.ipynb)
+- [`gmphd_surveillance.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/gmphd_surveillance.jl) — Object Surveillance
+- [`gmphd_aircraft_carrier.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/gmphd_aircraft_carrier.jl) — Aircraft Carrier scenario
+- [`gmphd_tests.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/gmphd_tests.jl) — Visualization helpers
