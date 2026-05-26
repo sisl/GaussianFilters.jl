@@ -4,9 +4,9 @@
 Construct measurement model with observation matrix C and sensor
 noise matrix R
 """
-struct Measurement{A<:Number,B<:Number}
-    C::AbstractMatrix{A}
-    R::AbstractMatrix{B}
+struct Measurement{MC<:AbstractMatrix, MR<:AbstractMatrix}
+    C::MC
+    R::MR
 end
 
 """
@@ -16,10 +16,10 @@ end
 Construct linear dynamics model with; transition matrix A,
 process noise matrix Q and offset vector d
 """
-struct Dynamics{A<:Number,B<:Number,C<:Number}
-    A::AbstractMatrix{A}
-    Q::AbstractMatrix{B}
-    d::AbstractVector{C}
+struct Dynamics{MA<:AbstractMatrix, MQ<:AbstractMatrix, VD<:AbstractVector}
+    A::MA
+    Q::MQ
+    d::VD
 end
 
 function Dynamics(A,Q)
@@ -48,8 +48,7 @@ end
 
 function GaussianMixture(w, μ::Vector{<:AbstractVector{T}},
     Σ::Vector{<:AbstractMatrix{K}}) where {T<:Number,K<:Number}
-    @assert length(μ) == length(Σ) == length(w) "Number
-     of mixtures inconsistent"
+    @assert length(μ) == length(Σ) == length(w) "Number of mixtures inconsistent"
     GaussianMixture{promote_type(T,K)}(length(w), w, μ, Σ)
 end
 
@@ -61,9 +60,9 @@ end
     spawning intesity of the target
     dyn: Dynamics
 """
-struct Spawn
-    β::GaussianMixture
-    dyn::Vector{Dynamics}
+struct Spawn{G<:GaussianMixture, D<:AbstractVector{<:Dynamics}}
+    β::G
+    dyn::D
 end
 
 """
@@ -82,14 +81,15 @@ end
     Ps: Survival probability
     Pd: Detection probability
 """
-struct PHDFilter
-    γ::GaussianMixture
-    spawn::Spawn
-    dyn::Vector{Dynamics}
-    meas::Measurement
+struct PHDFilter{G<:GaussianMixture, S<:Spawn,
+                 D<:AbstractVector{<:Dynamics}, M<:Measurement, F<:Function}
+    γ::G
+    spawn::S
+    dyn::D
+    meas::M
     Ps::Float64
     Pd::Float64
-    κ::Function
+    κ::F
 end
 
 function PHDFilter(γ::GaussianMixture, spawn::Spawn, dyn::Dynamics,
