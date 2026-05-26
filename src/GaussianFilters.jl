@@ -77,4 +77,18 @@ export
 	belief_ellipse
 include("utils.jl")
 
+# POMDPs.jl integration stub. The actual implementation lives in
+# ext/GaussianFiltersPOMDPsExt.jl and overrides this when POMDPs is
+# loaded. The stub errors with a helpful message otherwise.
+"""
+    pomdps_updater(filter::AbstractFilter)
+
+Wrap a GaussianFilters filter in a `POMDPs.Updater` so it can be passed
+to POMDPs.jl simulators like `HistoryRecorder`. Requires POMDPs.jl to
+be loaded; the implementation lives in a package extension.
+"""
+function pomdps_updater end
+
+export pomdps_updater
+
 end # module

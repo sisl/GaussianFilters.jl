@@ -1,78 +1,136 @@
-# Stabilizing a noisy inverted pendulum from partial observations
-# ================================================================
+# Stabilizing a noisy inverted pendulum with EKF beliefs + iLQR control
+# =====================================================================
 #
-# Demonstrates the GaussianFilters <-> POMDPs.jl integration in a closed
-# control loop. At each step we
-#   1. observe a noisy angle (the angular velocity is hidden),
-#   2. update the EKF belief via POMDPs.update,
-#   3. plan a torque sequence with iLQR using belief.μ as the starting
-#      state (certainty equivalent control — iLQR ignores belief.Σ),
-#   4. apply the first planned action.
-#
-# The dynamics are pulled from POMDPModels.InvertedPendulum so we are
-# integrating against the real ecosystem rather than a private copy.
+# This example defines a partial-observation `PendulumPOMDP`, uses an
+# `ExtendedKalmanFilter` wrapped as a `POMDPs.Updater`, and an
+# `ILQRPolicy` that runs iterative LQR on the belief mean (certainty
+# equivalence — iLQR ignores belief covariance). The closed loop is
+# driven by `POMDPs.simulate`, not a hand-rolled control loop.
 
 using GaussianFilters
 using POMDPs
+using POMDPTools: HistoryRecorder, eachstep
 using POMDPModels: InvertedPendulum
 using LinearAlgebra
 using Random
 using ForwardDiff
+using StaticArrays
+import Distributions
 using Distributions: MvNormal
 
-# ----- dynamics & observation models -----
-#
-# We pull parameters from POMDPModels.InvertedPendulum and re-implement
-# the Euler step generically (the POMDPModels.euler signature pins state
-# to Tuple{Float64,Float64}, which blocks ForwardDiff dual numbers).
+# Plots is needed for the animation block at the end. Loading it up
+# front so that macros (@animate, gif) are available at parse time.
+ENV["GKSwstype"] = "100"
+using Plots
 
-const ip = InvertedPendulum()
-const σ_proc = 0.01    # process noise std per state component
-const σ_obs  = 0.05    # angle observation noise std (rad)
+# ---------------------------------------------------------------------
+# Dynamics
+# ---------------------------------------------------------------------
+# Parameters are pulled from POMDPModels.InvertedPendulum so we are not
+# inventing physical constants. We re-express the Euler step generically
+# because POMDPModels.euler is signature-locked to Tuple{Float64,Float64}
+# and blocks ForwardDiff dual numbers (which are used both inside the
+# EKF Jacobian and inside the iLQR linearization).
 
-function dwdt(th, w, u, m=ip)
+const IP = InvertedPendulum()
+
+function dwdt(th, w, u, m = IP)
     num = m.g*sin(th) - m.alpha*m.m*m.l*(w^2)*sin(2*th)*0.5 - m.alpha*cos(th)*u
     den = (4/3)*m.l - m.alpha*m.l*(cos(th)^2)
-    return num/den
+    return num / den
 end
 
+# Deterministic Euler step. Returns an SVector to exercise our
+# StaticArrays compatibility end-to-end.
 function pendulum_step(x::AbstractVector, u::AbstractVector)
     th, w, ut = x[1], x[2], u[1]
     alph = dwdt(th, w, ut)
-    return [th + w*ip.dt + 0.5*alph*ip.dt^2,
-            w + alph*ip.dt]
+    return SVector{2}(th + w*IP.dt + 0.5*alph*IP.dt^2,
+                      w + alph*IP.dt)
 end
 
-# Observation: noisy measurement of the angle only.
-observe_angle(x::AbstractVector, u::AbstractVector) = [x[1]]
+# Observe the angle only; angular velocity must be inferred by the EKF.
+observe_angle(x::AbstractVector, u::AbstractVector) = SVector{1}(x[1])
 
-W = σ_proc^2 * Matrix{Float64}(I, 2, 2)
-V = (σ_obs^2)  * Matrix{Float64}(I, 1, 1)
+# ---------------------------------------------------------------------
+# POMDP definition
+# ---------------------------------------------------------------------
 
-dmodel = NonlinearDynamicsModel(pendulum_step, W)
-omodel = NonlinearObservationModel(observe_angle, V)
-ekf = ExtendedKalmanFilter(dmodel, omodel)
+const σ_proc = 0.01    # process noise std (per state component)
+const σ_obs  = 0.05    # angle observation noise std (rad)
 
-# ----- minimal iLQR -----
-#
-# Standard LQR backward pass on the linearization of pendulum_step around
-# the current nominal trajectory, with a quadratic stage cost
-#
-#   ℓ(x,u) = xᵀ Q x + uᵀ R u
-#
-# and quadratic terminal cost xᵀ Qf x. We linearize via ForwardDiff at
-# every step of the forward roll, do one backward LQR sweep to compute
-# feedback gains, and return the resulting control sequence. No line
-# search, no regularization — sufficient to stabilize from a small
-# perturbation (θ₀ ~ 0.3) but not to swing up from θ = π.
+struct PendulumPOMDP <: POMDP{SVector{2,Float64}, SVector{1,Float64}, SVector{1,Float64}}
+    σ_proc::Float64
+    σ_obs::Float64
+    dt::Float64
+    θ_max::Float64       # episode terminates if |θ| exceeds this
+    γ::Float64
+end
 
-const Q  = Diagonal([10.0, 1.0])        # stage cost on (θ, ω)
-const Qf = Diagonal([100.0, 10.0])      # terminal cost
-const R  = Diagonal([0.01])             # control effort
+PendulumPOMDP() = PendulumPOMDP(σ_proc, σ_obs, IP.dt, π, 0.99)
 
-function rollout(x0::Vector{Float64}, us::Vector{Vector{Float64}})
+# Initial-state distribution: a Gaussian over (θ, ω). HistoryRecorder
+# samples the true initial state from this and `initialize_belief` reads
+# the same distribution's mean/cov (via our extension) to seed the EKF.
+# We wrap MvNormal so `rand` returns an SVector instead of a Vector.
+struct SVecMvNormal
+    mvn::MvNormal
+end
+Base.rand(rng::AbstractRNG, d::SVecMvNormal) = SVector{2}(rand(rng, d.mvn))
+Distributions.mean(d::SVecMvNormal) = mean(d.mvn)
+Distributions.cov(d::SVecMvNormal)  = cov(d.mvn)
+# Forward initialize_belief to the underlying MvNormal so our extension picks it up.
+POMDPs.initialize_belief(u::POMDPs.Updater, d::SVecMvNormal) = POMDPs.initialize_belief(u, d.mvn)
+
+POMDPs.initialstate(::PendulumPOMDP) =
+    SVecMvNormal(MvNormal([0.6, 0.0], Matrix(Diagonal([0.05, 0.1]))))
+
+POMDPs.isterminal(p::PendulumPOMDP, s::AbstractVector) = abs(s[1]) > p.θ_max
+POMDPs.discount(p::PendulumPOMDP) = p.γ
+
+# `gen` is the generative interface: (next_state, observation, reward).
+# Relaxing the state argument to AbstractVector (rather than SVector{2})
+# accommodates POMDPs' internal handling.
+function POMDPs.gen(p::PendulumPOMDP, s::AbstractVector, a::AbstractVector, rng)
+    sp = pendulum_step(s, a) .+ p.σ_proc .* SVector{2}(randn(rng), randn(rng))
+    o  = observe_angle(sp, a) .+ p.σ_obs .* SVector{1}(randn(rng))
+    r  = -(s[1]^2 + 0.1*s[2]^2 + 0.01*a[1]^2)
+    return (sp = sp, o = o, r = r)
+end
+
+# ---------------------------------------------------------------------
+# ILQRPolicy
+# ---------------------------------------------------------------------
+# Holds only iLQR hyperparameters + warm-start solver state. No belief,
+# no EKF — that's the Updater's job.
+
+mutable struct ILQRPolicy{TQ, TR} <: POMDPs.Policy
+    Q::TQ
+    Qf::TQ
+    R::TR
+    H::Int                                  # planning horizon
+    max_iters::Int
+    u_max::Float64                          # actuator saturation
+    us_warm::Vector{SVector{1,Float64}}     # solver warm start
+end
+
+function ILQRPolicy(;
+        Q  = Diagonal(SVector{2}(10.0, 1.0)),
+        Qf = Diagonal(SVector{2}(50.0, 5.0)),
+        R  = Diagonal(SVector{1}(0.05)),
+        H::Int = 40,
+        max_iters::Int = 8,
+        u_max::Float64 = 100.0)
+    return ILQRPolicy(Q, Qf, R, H, max_iters, u_max, SVector{1,Float64}[])
+end
+
+# ---------------------------------------------------------------------
+# iLQR free functions (take the policy as input)
+# ---------------------------------------------------------------------
+
+function rollout(x0, us, p::ILQRPolicy)
     H = length(us)
-    xs = Vector{Vector{Float64}}(undef, H + 1)
+    xs = Vector{SVector{2,Float64}}(undef, H + 1)
     xs[1] = x0
     for t in 1:H
         xs[t+1] = pendulum_step(xs[t], us[t])
@@ -80,100 +138,180 @@ function rollout(x0::Vector{Float64}, us::Vector{Vector{Float64}})
     return xs
 end
 
-function ilqr_step(x0::Vector{Float64}; H::Int = 20)
-    # Initialize nominal control sequence at zero, roll out, then take
-    # one LQR backward pass on the linearization of that trajectory.
-    us = [zeros(1) for _ in 1:H]
-    xs = rollout(x0, us)
+function trajectory_cost(xs, us, p::ILQRPolicy)
+    c = xs[end]' * p.Qf * xs[end]
+    for t in eachindex(us)
+        c += xs[t]' * p.Q * xs[t] + us[t]' * p.R * us[t]
+    end
+    return c
+end
 
-    # Terminal value
-    Vx  = 2 * Qf * xs[end]
-    Vxx = 2 * Qf
-
+function backward_pass(xs, us, p::ILQRPolicy, μ_reg)
+    H = length(us)
+    Vx  = 2 * p.Qf * xs[end]
+    Vxx = 2 * Matrix(p.Qf)
     K = Vector{Matrix{Float64}}(undef, H)
     k = Vector{Vector{Float64}}(undef, H)
-
     for t in H:-1:1
         x, u = xs[t], us[t]
-        # Jacobians of dynamics at (x, u)
-        fx = ForwardDiff.jacobian(z -> pendulum_step(z, u), x)
-        fu = ForwardDiff.jacobian(z -> pendulum_step(x, z), u)
-
-        # Stage cost derivatives
-        lx  = 2 * Q * x
-        lu  = 2 * R * u
-        lxx = 2 * Q
-        luu = 2 * R
-
-        # Q-function expansion
-        Qx  = lx  + fx' * Vx
-        Qu  = lu  + fu' * Vx
-        Qxx = lxx + fx' * Vxx * fx
-        Quu = luu + fu' * Vxx * fu
+        fx = ForwardDiff.jacobian(z -> pendulum_step(z, u), Vector(x))
+        fu = ForwardDiff.jacobian(z -> pendulum_step(x, z), Vector(u))
+        Qx  = 2 * Vector(p.Q  * x) + fx' * Vx
+        Qu  = 2 * Vector(p.R  * u) + fu' * Vx
+        Qxx = 2 * Matrix(p.Q)      + fx' * Vxx * fx
+        Quu = 2 * Matrix(p.R)      + fu' * Vxx * fu
         Qux = fu' * Vxx * fx
-
-        # Feedback gains
-        Quu_inv = inv(Quu)
+        Quu_inv = inv(Quu + μ_reg * I)
         k[t] = -Quu_inv * Qu
         K[t] = -Quu_inv * Qux
-
-        # Value-function update
         Vx  = Qx + K[t]' * Quu * k[t] + K[t]' * Qu + Qux' * k[t]
         Vxx = Qxx + K[t]' * Quu * K[t] + K[t]' * Qux + Qux' * K[t]
     end
+    return K, k
+end
 
-    # Forward roll of the new control law (no line search).
-    new_us = Vector{Vector{Float64}}(undef, H)
-    new_xs = Vector{Vector{Float64}}(undef, H + 1)
-    new_xs[1] = x0
+function forward_pass(xs, us, K, k, α, p::ILQRPolicy)
+    H = length(us)
+    new_xs = Vector{SVector{2,Float64}}(undef, H + 1)
+    new_us = Vector{SVector{1,Float64}}(undef, H)
+    new_xs[1] = xs[1]
     for t in 1:H
-        new_us[t] = us[t] + k[t] + K[t] * (new_xs[t] - xs[t])
+        u_lin = us[t] + α * SVector{1}(k[t][1]) + SVector{1}(K[t][1,1]*(new_xs[t][1]-xs[t][1]) +
+                                                              K[t][1,2]*(new_xs[t][2]-xs[t][2]))
+        new_us[t] = SVector{1}(clamp(u_lin[1], -p.u_max, p.u_max))
         new_xs[t+1] = pendulum_step(new_xs[t], new_us[t])
     end
-    return new_us
+    return new_xs, new_us
 end
 
-# ----- closed-loop simulation -----
+function ilqr(x0::SVector{2,Float64}, p::ILQRPolicy)
+    us = isempty(p.us_warm) ? [SVector{1}(0.0) for _ in 1:p.H] : copy(p.us_warm)
+    if length(us) != p.H
+        us = [SVector{1}(0.0) for _ in 1:p.H]
+    end
+    xs = rollout(x0, us, p)
+    J  = trajectory_cost(xs, us, p)
+    μ_reg = 1e-3
+    for _ in 1:p.max_iters
+        K, k = backward_pass(xs, us, p, μ_reg)
+        accepted = false
+        α = 1.0
+        for _ in 1:10
+            new_xs, new_us = forward_pass(xs, us, K, k, α, p)
+            J_new = trajectory_cost(new_xs, new_us, p)
+            if J_new < J - 1e-4
+                xs, us = new_xs, new_us
+                J = J_new
+                accepted = true
+                μ_reg = max(μ_reg / 2, 1e-6)
+                break
+            end
+            α *= 0.5
+        end
+        accepted || (μ_reg *= 4)
+        μ_reg > 1e6 && break
+    end
+    return us
+end
+
+# ---------------------------------------------------------------------
+# THE POMDPs.Policy interface — a one-liner.
+# ---------------------------------------------------------------------
+function POMDPs.action(policy::ILQRPolicy, belief::GaussianBelief)
+    us = ilqr(SVector{2}(belief.μ[1], belief.μ[2]), policy)
+    # Shift solution by one step so the next call warm-starts.
+    policy.us_warm = vcat(us[2:end], [SVector{1}(0.0)])
+    return us[1]
+end
+
+# ---------------------------------------------------------------------
+# Build the components
+# ---------------------------------------------------------------------
+
+const W = (σ_proc^2) * Matrix{Float64}(I, 2, 2)
+const V = (σ_obs^2)  * Matrix{Float64}(I, 1, 1)
+
+dmodel = NonlinearDynamicsModel(pendulum_step, W)
+omodel = NonlinearObservationModel(observe_angle, V)
+ekf    = ExtendedKalmanFilter(dmodel, omodel)
+updater = pomdps_updater(ekf)          # wraps the EKF as a POMDPs.Updater
+pomdp   = PendulumPOMDP()
+policy  = ILQRPolicy()
+
+# ---------------------------------------------------------------------
+# Run it via POMDPs.simulate
+# ---------------------------------------------------------------------
 
 rng = MersenneTwister(0)
+hr  = HistoryRecorder(rng = rng, max_steps = 60)
+hist = simulate(hr, pomdp, policy, updater)
 
-# True initial state: a small angle perturbation from upright.
-x_true = [0.3, 0.0]
+# Pull trajectory out of the history for reporting (and downstream
+# plotting, etc).
+angle_history  = [step.s[1] for step in eachstep(hist)]
+push!(angle_history, hist[end].sp[1])              # final state
+belief_history = [step.b for step in eachstep(hist)]
+push!(belief_history, hist[end].bp)                # final belief
+action_history = [step.a[1] for step in eachstep(hist)]
 
-# Initial belief: slightly uncertain prior centered near the true state.
-prior = MvNormal([0.3, 0.0], Matrix(Diagonal([0.05, 0.1])))
-belief = POMDPs.initialize_belief(ekf, prior)
+θ_final = angle_history[end]
+θ_max   = maximum(abs, angle_history)
+steady = angle_history[(2*length(angle_history))÷3 : end]
+θ_ss_mean = sum(steady) / length(steady)
+θ_ss_max  = maximum(abs, steady)
 
-T = 60                       # control steps (60 * dt = 6 s)
-u_prev = [0.0]
-angle_history = Float64[x_true[1]]
-mean_history = [copy(belief.μ)]
+println("Initial angle:                          ", round(angle_history[1], digits=4), " rad")
+println("Final true angle:                       ", round(θ_final, digits=4), " rad")
+println("Max |angle| during run:                 ", round(θ_max, digits=4), " rad")
+println("Steady-state mean |angle| (last third): ", round(abs(θ_ss_mean), digits=4), " rad")
+println("Steady-state max  |angle| (last third): ", round(θ_ss_max, digits=4), " rad")
+println()
+println("Final belief mean (θ, ω):               (",
+        round(belief_history[end].μ[1], digits=4), ", ",
+        round(belief_history[end].μ[2], digits=4), ")")
 
-for t in 1:T
-    global x_true, belief, u_prev
+# ---------------------------------------------------------------------
+# Animation (written to examples/outputs/, which is gitignored)
+# ---------------------------------------------------------------------
+# Set GKSwstype=100 so Plots runs headless. Set GENERATE_GIF=false in
+# the environment to skip rendering.
 
-    # Plan a torque from the certainty-equivalent state.
-    us = ilqr_step(belief.μ)
-    u  = us[1]
+if get(ENV, "GENERATE_GIF", "true") != "false"
+    out_dir = joinpath(@__DIR__, "outputs")
+    mkpath(out_dir)
+    gif_path = joinpath(out_dir, "pendulum_ekf_ilqr.gif")
 
-    # Step the true system (with process noise).
-    x_true = pendulum_step(x_true, u) .+ σ_proc .* randn(rng, 2)
+    anim = @animate for i in 1:length(angle_history)
+        θ_true = angle_history[i]
+        θ_blf  = belief_history[i].μ[1]
 
-    # Observe (with measurement noise).
-    y = observe_angle(x_true, u) .+ σ_obs .* randn(rng, 1)
+        # Pendulum rod: anchored at origin, rod points "up" when θ=0.
+        L = 1.0
+        x_tip_true, y_tip_true = L*sin(θ_true), L*cos(θ_true)
+        x_tip_blf,  y_tip_blf  = L*sin(θ_blf),  L*cos(θ_blf)
 
-    # Belief update via the POMDPs.jl interface.
-    belief = POMDPs.update(ekf, belief, u, y)
+        p1 = plot([0.0, x_tip_true], [0.0, y_tip_true],
+                  lw=4, color=:steelblue, label="true",
+                  xlim=(-1.2, 1.2), ylim=(-0.4, 1.2),
+                  aspect_ratio=:equal, framestyle=:box,
+                  title="Pendulum (step $(i-1)/$(length(angle_history)-1))")
+        plot!(p1, [0.0, x_tip_blf], [0.0, y_tip_blf],
+              lw=2, color=:orange, linestyle=:dash, label="belief")
+        scatter!(p1, [0.0], [0.0], color=:black, ms=4, label=false)
+        scatter!(p1, [x_tip_true], [y_tip_true], color=:steelblue, ms=6, label=false)
 
-    push!(angle_history, x_true[1])
-    push!(mean_history, copy(belief.μ))
-    u_prev = u
+        p2 = plot(0:(i-1), angle_history[1:i],
+                  color=:steelblue, lw=2, label="θ true",
+                  xlim=(0, length(angle_history)-1), ylim=(-1.0, 1.0),
+                  xlabel="step", ylabel="θ (rad)",
+                  legend=:topright)
+        plot!(p2, 0:(i-1), [b.μ[1] for b in belief_history[1:i]],
+              color=:orange, lw=2, linestyle=:dash, label="θ belief")
+        hline!(p2, [0.0], color=:gray, linestyle=:dot, label=false)
+
+        plot(p1, p2, layout=(1, 2), size=(900, 400))
+    end
+    gif(anim, gif_path, fps=10)
+    println()
+    println("Animation saved to: $gif_path")
 end
-
-θf = angle_history[end]
-ωf = mean_history[end][2]
-println("Final true angle:        ", round(θf, digits=4), " rad")
-println("Final belief mean (θ,ω): (",
-        round(mean_history[end][1], digits=4), ", ",
-        round(ωf, digits=4), ")")
-println("Max |angle| over run:    ", round(maximum(abs, angle_history), digits=4), " rad")

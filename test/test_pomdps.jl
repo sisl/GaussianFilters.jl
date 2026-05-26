@@ -32,4 +32,17 @@ using Distributions: MvNormal
     @test b_from_d isa GaussianBelief
     @test b_from_d.μ == [1.0, 2.0]
     @test b_from_d.Σ == [4.0 0.0; 0.0 9.0]
+
+    # pomdps_updater wraps the filter as a POMDPs.Updater subtype
+    upd = pomdps_updater(kf)
+    @test upd isa POMDPs.Updater
+    b_via_upd = POMDPs.update(upd, b0, a, o)
+    @test b_via_upd.μ == b_native.μ
+    @test b_via_upd.Σ == b_native.Σ
+
+    # initialize_belief through the wrapper works too
+    @test POMDPs.initialize_belief(upd, b0) === b0
+    b_wrapped = POMDPs.initialize_belief(upd, d)
+    @test b_wrapped isa GaussianBelief
+    @test b_wrapped.μ == [1.0, 2.0]
 end
