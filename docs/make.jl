@@ -12,6 +12,9 @@ makedocs(
                 "User Documentation" => [
                     "Kalman-class Filters" => "kalman.md",
                     "GM-PHD Filter" => "gmphd.md"
+                    ],
+                "Integrations" => [
+                    "POMDPs.jl" => "pomdps.md"
                     ]
                 ])
 
