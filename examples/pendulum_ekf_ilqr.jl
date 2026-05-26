@@ -94,7 +94,7 @@ Distributions.cov(d::SVecMvNormal)  = cov(d.mvn)
 POMDPs.initialize_belief(u::POMDPs.Updater, d::SVecMvNormal) = POMDPs.initialize_belief(u, d.mvn)
 
 POMDPs.initialstate(::PendulumPOMDP) =
-    SVecMvNormal(MvNormal([0.6, 0.0], Matrix(Diagonal([0.05, 0.1]))))
+    SVecMvNormal(MvNormal([0.0, 0.0], Matrix(Diagonal([0.5^2, 0.1^2]))))
 
 POMDPs.isterminal(p::PendulumPOMDP, s::AbstractVector) = abs(s[1]) > p.θ_max
 POMDPs.discount(p::PendulumPOMDP) = p.γ
