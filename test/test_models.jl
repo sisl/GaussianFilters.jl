@@ -55,3 +55,12 @@ end
     o2 = measure(om, x0, u0, rng)
     @test all(x -> !isapprox(x, 1.0), o2)
 end
+
+@testset "GaussianBelief sampling honors RNG" begin
+    b = GaussianBelief(zeros(3), Matrix{Float64}(I, 3, 3))
+    s1 = rand(MersenneTwister(42), b)
+    s2 = rand(MersenneTwister(42), b)
+    @test s1 == s2
+    s3 = rand(MersenneTwister(43), b)
+    @test s1 != s3
+end
