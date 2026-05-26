@@ -11,7 +11,7 @@ Self-contained example scripts demonstrating the filters in `GaussianFilters.jl`
 | `gmphd_aircraft_carrier.jl` | GM-PHD | Aircraft carrier scenario with birth/spawn models |
 | `gmphd_tests.jl` | GM-PHD | Visualization helpers and pruning/merging demos |
 | `pomdps_integration.jl` | KF | Uses a `KalmanFilter` as a `POMDPs.jl` belief updater |
-| `pendulum_ekf_ilqr.jl` | EKF | Closed-loop stabilization of an inverted pendulum from partial (angle-only) observations. Defines a `PendulumPOMDP` and an `ILQRPolicy <: POMDPs.Policy`, wraps the EKF with `pomdps_updater`, and runs everything through `POMDPs.simulate`. Writes an animation to `examples/outputs/pendulum_ekf_ilqr.gif` (gitignored). |
+| `pendulum_ekf_ilqr.jl` | EKF | Closed-loop stabilization of an inverted pendulum observed only through its angular velocity (gyroscope-style). The angle is hidden and inferred by the EKF. Defines a `PendulumPOMDP` and an `ILQRPolicy <: POMDPs.Policy`, wraps the EKF with `pomdps_updater`, and runs everything through `POMDPs.simulate`. Writes an animation showing belief uncertainty (±2σ) on both states to `examples/outputs/pendulum_ekf_ilqr.gif` (gitignored). |
 
 ## Running
 

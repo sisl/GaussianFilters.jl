@@ -6,6 +6,13 @@
 # `ILQRPolicy` that runs iterative LQR on the belief mean (certainty
 # equivalence — iLQR ignores belief covariance). The closed loop is
 # driven by `POMDPs.simulate`, not a hand-rolled control loop.
+#
+# The observation is the angular velocity ω only (gyroscope-style);
+# the angle θ is hidden and must be inferred. This is the more
+# pedagogically interesting filtering problem: the controller acts on
+# `belief.μ[1]` for the angle even though the angle is never directly
+# observed. The animation shows σθ shrinking over time (the filter
+# converging) while σω stays small throughout (direct observation).
 
 using GaussianFilters
 using POMDPs
@@ -49,15 +56,19 @@ function pendulum_step(x::AbstractVector, u::AbstractVector)
                       w + alph*IP.dt)
 end
 
-# Observe the angle only; angular velocity must be inferred by the EKF.
-observe_angle(x::AbstractVector, u::AbstractVector) = SVector{1}(x[1])
+# Observe the angular velocity only (gyroscope-like measurement). The
+# angle itself must be inferred by the EKF — there is no direct
+# observation of absolute position. This is the more pedagogically
+# interesting variant: the controller acts on belief.μ for θ, which
+# is reconstructed entirely from successive ω observations.
+observe_omega(x::AbstractVector, u::AbstractVector) = SVector{1}(x[2])
 
 # ---------------------------------------------------------------------
 # POMDP definition
 # ---------------------------------------------------------------------
 
 const σ_proc = 0.01    # process noise std (per state component)
-const σ_obs  = 0.05    # angle observation noise std (rad)
+const σ_obs  = 0.1     # angular velocity observation noise std (rad/s)
 
 struct PendulumPOMDP <: POMDP{SVector{2,Float64}, SVector{1,Float64}, SVector{1,Float64}}
     σ_proc::Float64
@@ -93,7 +104,7 @@ POMDPs.discount(p::PendulumPOMDP) = p.γ
 # accommodates POMDPs' internal handling.
 function POMDPs.gen(p::PendulumPOMDP, s::AbstractVector, a::AbstractVector, rng)
     sp = pendulum_step(s, a) .+ p.σ_proc .* SVector{2}(randn(rng), randn(rng))
-    o  = observe_angle(sp, a) .+ p.σ_obs .* SVector{1}(randn(rng))
+    o  = observe_omega(sp, a) .+ p.σ_obs .* SVector{1}(randn(rng))
     r  = -(s[1]^2 + 0.1*s[2]^2 + 0.01*a[1]^2)
     return (sp = sp, o = o, r = r)
 end
@@ -232,7 +243,7 @@ const W = (σ_proc^2) * Matrix{Float64}(I, 2, 2)
 const V = (σ_obs^2)  * Matrix{Float64}(I, 1, 1)
 
 dmodel = NonlinearDynamicsModel(pendulum_step, W)
-omodel = NonlinearObservationModel(observe_angle, V)
+omodel = NonlinearObservationModel(observe_omega, V)
 ekf    = ExtendedKalmanFilter(dmodel, omodel)
 updater = pomdps_updater(ekf)          # wraps the EKF as a POMDPs.Updater
 pomdp   = PendulumPOMDP()
@@ -250,6 +261,8 @@ hist = simulate(hr, pomdp, policy, updater)
 # plotting, etc).
 angle_history  = [step.s[1] for step in eachstep(hist)]
 push!(angle_history, hist[end].sp[1])              # final state
+omega_history  = [step.s[2] for step in eachstep(hist)]
+push!(omega_history, hist[end].sp[2])
 belief_history = [step.b for step in eachstep(hist)]
 push!(belief_history, hist[end].bp)                # final belief
 action_history = [step.a[1] for step in eachstep(hist)]
@@ -281,11 +294,18 @@ if get(ENV, "GENERATE_GIF", "true") != "false"
     mkpath(out_dir)
     gif_path = joinpath(out_dir, "pendulum_ekf_ilqr.gif")
 
-    anim = @animate for i in 1:length(angle_history)
+    N = length(angle_history)
+    # Pre-compute belief mean and ±2σ envelopes over the full run.
+    μθ = [b.μ[1] for b in belief_history]
+    μω = [b.μ[2] for b in belief_history]
+    σθ = [2*sqrt(b.Σ[1,1]) for b in belief_history]
+    σω = [2*sqrt(b.Σ[2,2]) for b in belief_history]
+
+    anim = @animate for i in 1:N
         θ_true = angle_history[i]
         θ_blf  = belief_history[i].μ[1]
 
-        # Pendulum rod: anchored at origin, rod points "up" when θ=0.
+        # --- left: pendulum rod animation ---
         L = 1.0
         x_tip_true, y_tip_true = L*sin(θ_true), L*cos(θ_true)
         x_tip_blf,  y_tip_blf  = L*sin(θ_blf),  L*cos(θ_blf)
@@ -294,22 +314,40 @@ if get(ENV, "GENERATE_GIF", "true") != "false"
                   lw=4, color=:steelblue, label="true",
                   xlim=(-1.2, 1.2), ylim=(-0.4, 1.2),
                   aspect_ratio=:equal, framestyle=:box,
-                  title="Pendulum (step $(i-1)/$(length(angle_history)-1))")
+                  title="Pendulum (step $(i-1)/$(N-1))")
         plot!(p1, [0.0, x_tip_blf], [0.0, y_tip_blf],
               lw=2, color=:orange, linestyle=:dash, label="belief")
         scatter!(p1, [0.0], [0.0], color=:black, ms=4, label=false)
         scatter!(p1, [x_tip_true], [y_tip_true], color=:steelblue, ms=6, label=false)
 
-        p2 = plot(0:(i-1), angle_history[1:i],
-                  color=:steelblue, lw=2, label="θ true",
-                  xlim=(0, length(angle_history)-1), ylim=(-1.0, 1.0),
-                  xlabel="step", ylabel="θ (rad)",
-                  legend=:topright)
-        plot!(p2, 0:(i-1), [b.μ[1] for b in belief_history[1:i]],
-              color=:orange, lw=2, linestyle=:dash, label="θ belief")
+        # --- top right: θ over time with belief ±2σ ribbon ---
+        ts = 0:(i-1)
+        p2 = plot(ts, μθ[1:i], ribbon=σθ[1:i],
+                  color=:orange, lw=2, fillalpha=0.25,
+                  label="belief μ ± 2σ",
+                  xlim=(0, N-1), ylim=(-1.0, 1.0),
+                  ylabel="θ (rad)", legend=:topright,
+                  guidefonthalign=:right, ymirror=false,
+                  left_margin=8Plots.mm)
+        plot!(p2, ts, angle_history[1:i],
+              color=:steelblue, lw=2, label="θ true")
         hline!(p2, [0.0], color=:gray, linestyle=:dot, label=false)
 
-        plot(p1, p2, layout=(1, 2), size=(900, 400))
+        # --- bottom right: ω over time with belief ±2σ ribbon ---
+        p3 = plot(ts, μω[1:i], ribbon=σω[1:i],
+                  color=:orange, lw=2, fillalpha=0.25,
+                  label="belief μ ± 2σ",
+                  xlim=(0, N-1), ylim=(-3.0, 3.0),
+                  xlabel="step", ylabel="ω (rad/s)", legend=:topright,
+                  guidefonthalign=:right,
+                  left_margin=8Plots.mm, bottom_margin=8Plots.mm)
+        plot!(p3, ts, omega_history[1:i],
+              color=:steelblue, lw=2, label="ω true (observed)")
+        hline!(p3, [0.0], color=:gray, linestyle=:dot, label=false)
+
+        right = plot(p2, p3, layout=(2, 1))
+        plot(p1, right, layout=(1, 2), size=(1100, 550),
+             bottom_margin=5Plots.mm)
     end
     gif(anim, gif_path, fps=10)
     println()
