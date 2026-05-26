@@ -56,6 +56,6 @@ function measure_info(filter::ExtendedKalmanFilter, bp::GaussianBelief, y::Abstr
     μn = bp.μ + K * (y - yp)
     Σn = (I - K * H) * bp.Σ
         
-    info = (innovation_cov = ΣY, kalman_gain = K, predicted_measurement = yp)
+    info = (innovation_cov = Σ_Y, kalman_gain = K, predicted_measurement = yp)
     return GaussianBelief(μn, Σn), info
 end
