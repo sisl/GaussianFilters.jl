@@ -64,3 +64,16 @@ end
     s3 = rand(MersenneTwister(43), b)
     @test s1 != s3
 end
+
+@testset "Identity-form covariances" begin
+    # I(n) constructs a sized Diagonal — accepted everywhere a matrix is
+    @test GaussianBelief(zeros(3), I(3)) isa GaussianBelief
+    @test LinearDynamicsModel(zeros(3,3), zeros(3,3), 0.5*I(3)) isa LinearDynamicsModel
+    @test NonlinearDynamicsModel((x,u)->x, 0.5*I(3)) isa NonlinearDynamicsModel
+
+    # Bare UniformScaling is accepted by GaussianBelief — size inferred from μ
+    b = GaussianBelief([1.0, 2.0, 3.0], 2.0*I)
+    @test b isa GaussianBelief
+    @test size(b.Σ) == (3,3)
+    @test b.Σ[1,1] ≈ 2.0
+end
