@@ -95,6 +95,21 @@ GaussianFilters.unpack
 GaussianFilters.belief_ellipse
 ```
 
+## POMDPs.jl integration
+
+When [POMDPs.jl](https://github.com/JuliaPOMDP/POMDPs.jl) is also
+loaded, a package extension wires GaussianFilters' `AbstractFilter`
+into the POMDPs belief-updater interface. Use `pomdps_updater` to
+obtain a `POMDPs.Updater` wrapper suitable for `POMDPs.simulate` and
+related simulators.
+
+```@docs
+GaussianFilters.pomdps_updater
+```
+
+See `examples/pomdps_integration.jl` and `examples/pendulum_ekf_ilqr.jl`
+for end-to-end usage.
+
 ## Examples
 
 Full implementation examples can be found in the [`examples/`](https://github.com/sisl/GaussianFilters.jl/tree/master/examples) directory of the repo:
@@ -102,3 +117,5 @@ Full implementation examples can be found in the [`examples/`](https://github.co
 - [`kf_2d_motion.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/kf_2d_motion.jl) — Kalman Filter
 - [`ekf_spinning_satellite.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/ekf_spinning_satellite.jl) — Extended Kalman Filter
 - [`ukf_nonholonomic_robot.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/ukf_nonholonomic_robot.jl) — Unscented Kalman Filter
+- [`pomdps_integration.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/pomdps_integration.jl) — KF used through `POMDPs.update`
+- [`pendulum_ekf_ilqr.jl`](https://github.com/sisl/GaussianFilters.jl/blob/master/examples/pendulum_ekf_ilqr.jl) — EKF + iLQR closed loop driven by `POMDPs.simulate`
