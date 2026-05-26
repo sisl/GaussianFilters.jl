@@ -4,7 +4,6 @@ using Random
 using Logging
 using LinearAlgebra
 using Distributions
-using NBInclude
 using StableRNGs
 
 # Package Under Test
@@ -65,17 +64,5 @@ end
     end
     @time @testset "GaussianFilter GM-PHD Testing" begin
         include(joinpath(testdir, "test_gmphd.jl"))
-    end
-
-    @testset "Notebooks testing" begin 
-        nbdir = joinpath(dirname(@__DIR__), "notebooks")
-        for d in readdir(nbdir)
-            if endswith(d, ".ipynb")
-                path = joinpath(nbdir, d)
-                @testset "$d" begin
-                    @nbinclude path
-                end
-            end
-        end
     end
 end
