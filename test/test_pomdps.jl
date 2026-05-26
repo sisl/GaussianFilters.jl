@@ -1,4 +1,5 @@
 using POMDPs
+using Distributions: MvNormal
 
 @testset "POMDPs.update extension" begin
     dt = 0.1
@@ -24,4 +25,11 @@ using POMDPs
 
     # initialize_belief should be the identity on a GaussianBelief
     @test POMDPs.initialize_belief(kf, b0) === b0
+
+    # initialize_belief from an MvNormal extracts mean and covariance
+    d = MvNormal([1.0, 2.0], [4.0 0.0; 0.0 9.0])
+    b_from_d = POMDPs.initialize_belief(kf, d)
+    @test b_from_d isa GaussianBelief
+    @test b_from_d.μ == [1.0, 2.0]
+    @test b_from_d.Σ == [4.0 0.0; 0.0 9.0]
 end

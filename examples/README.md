@@ -11,6 +11,7 @@ Self-contained example scripts demonstrating the filters in `GaussianFilters.jl`
 | `gmphd_aircraft_carrier.jl` | GM-PHD | Aircraft carrier scenario with birth/spawn models |
 | `gmphd_tests.jl` | GM-PHD | Visualization helpers and pruning/merging demos |
 | `pomdps_integration.jl` | KF | Uses a `KalmanFilter` as a `POMDPs.jl` belief updater |
+| `pendulum_ekf_ilqr.jl` | EKF | Closed-loop stabilization of `POMDPModels.InvertedPendulum` from partial observations, with an iLQR policy on the belief mean |
 
 ## Running
 
