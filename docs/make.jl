@@ -3,8 +3,9 @@ using Documenter, GaussianFilters
 # This function builds the documentation
 makedocs(
     modules   = [GaussianFilters],
-    format    = :html,
+    format    = Documenter.HTML(),
     sitename  = "GaussianFilters",
+    warnonly  = [:docs_block, :missing_docs],
     pages     = ["Introduction" => [
                     "Basics" => "index.md",
                     "Installation" => "install.md"
