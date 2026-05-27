@@ -61,13 +61,13 @@ array_isapprox(first_update.Σ, first_predict_measure.Σ)
 @test size(μ) == (length(filtered_beliefs), length(filtered_beliefs[1].μ))
 @test size(Σ) == (length(filtered_beliefs), size(filtered_beliefs[1].Σ)...)
 
-array_isapprox(sim_states[end], [10.392777087830043, 1.881278839651635, 1.3840241662693935]; atol=0.001)
-array_isapprox(sim_measurements[end], [10.247812301812102, 2.3133675336888575, 1.1394960504116656]; atol=0.001)
-array_isapprox(filtered_beliefs[end].μ, [10.11546527880089, 1.9759609213772842, 1.2802257669046886];
+array_isapprox(sim_states[end], [9.476812080278332, -0.31100645773037805, 0.6082138148099138]; atol=0.001)
+array_isapprox(sim_measurements[end], [9.896156133972513, 0.23998395281014084, 0.7400708222590943]; atol=0.001)
+array_isapprox(filtered_beliefs[end].μ, [9.437578760960118, -0.2566452039031286, 0.4989401367606114];
                 atol=0.001)
-array_isapprox(filtered_beliefs[end].Σ, [0.22360753709112413 0.003704458778907191 -0.0053481184628957346;
-                                        0.003704458778907191 0.01690085173611888 -9.213406017856073e-5;
-                                        -0.0053481184628957346 -9.213406017856073e-5 0.016969928487616054]; atol=0.001)
+array_isapprox(filtered_beliefs[end].Σ, [0.01682790984107462 5.309144795905572e-5 2.5384310326873065e-5;
+                                        5.309144795905572e-5 0.01683608550354201 1.1576863526696874e-7;
+                                        2.5384310326873065e-5 1.1576863526696874e-7 0.01683587863740326]; atol=0.001)
 
 @test issymmetric(filtered_beliefs[end].Σ)  
 @test isposdef(filtered_beliefs[end].Σ) 

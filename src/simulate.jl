@@ -37,7 +37,7 @@ function simulation(filter::AbstractFilter, b0::GaussianBelief,
     state_history = [s0]
     measurement_history = Vector{AbstractVector{typeof(s0[1])}}()
     for u in action_sequence
-        xn, yn = simulate_step(filter, state_history[end], u)
+        xn, yn = simulate_step(filter, state_history[end], u, rng)
         push!(state_history, xn)
         push!(measurement_history, yn)
     end
