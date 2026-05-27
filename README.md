@@ -44,18 +44,30 @@ b0 = GaussianBelief([0, 0], [1 0; 0 1])
 b1 = update(ukf, b0, action, measurement)
 ```
 
-See documentation and examples for more details.
+Covariances may be passed as any `AbstractMatrix`, or in identity form
+(`I(n)`, `s*I(n)`). `GaussianBelief` also accepts a bare `UniformScaling`,
+inferring the size from the mean vector:
+
+```julia
+b0 = GaussianBelief([0.0, 0.0], 2.0*I)   # Σ becomes 2*I(2)
+```
+
+See the `examples/` directory for full demonstrations.
 
 ## Examples
 
-Examples notebooks can be found in the `notebooks` folder:
+Each example script lives in `examples/` with its own `Project.toml`.
+Run any of them with:
 
-[Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/KF_2DMotionExample.ipynb)
+```sh
+julia --project=examples examples/kf_2d_motion.jl
+```
 
-[Extended Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/EKF_SpinningSatelliteExample.ipynb)
-
-[Unscented Kalman Filter Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/UKF_NonholonomicRobot.ipynb)
-
-[GM-PHD Object Surveillance Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/GMPHD_SurveillanceExample.ipynb)
-
-[GM-PHD Aircraft Carrier Example](https://github.com/sisl/GaussianFilters.jl/blob/master/notebooks/GMPHD_AircraftCarrierExample.ipynb)
+| Script | Filter | Description |
+|---|---|---|
+| [`kf_2d_motion.jl`](examples/kf_2d_motion.jl) | KF | 2D point-mass with linear dynamics |
+| [`ekf_spinning_satellite.jl`](examples/ekf_spinning_satellite.jl) | EKF | Rigid-body rotation with saturated observations |
+| [`ukf_nonholonomic_robot.jl`](examples/ukf_nonholonomic_robot.jl) | UKF | Differential-drive robot with range observation |
+| [`gmphd_surveillance.jl`](examples/gmphd_surveillance.jl) | GM-PHD | Multi-target tracking |
+| [`gmphd_aircraft_carrier.jl`](examples/gmphd_aircraft_carrier.jl) | GM-PHD | Aircraft carrier scenario |
+| [`gmphd_tests.jl`](examples/gmphd_tests.jl) | GM-PHD | Visualization helpers |
