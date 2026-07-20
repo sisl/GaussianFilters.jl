@@ -1,9 +1,8 @@
 using Documenter, GaussianFilters
 
-# This function builds the documentation
 makedocs(
     modules   = [GaussianFilters],
-    format    = Documenter.HTML(),
+    format    = Documenter.HTML(; prettyurls = get(ENV, "CI", "false") == "true"),
     sitename  = "GaussianFilters",
     pages     = ["Introduction" => [
                     "Basics" => "index.md",
@@ -18,6 +17,9 @@ makedocs(
                     ]
                 ])
 
-deploydocs(
-    repo = "github.com/sisl/GaussianFilters.jl",
-)
+if get(ENV, "CI", "false") == "true"
+    deploydocs(;
+        repo = "github.com/sisl/GaussianFilters.jl",
+        push_preview = true,
+    )
+end
