@@ -70,4 +70,8 @@ end
     @time @testset "StaticArrays Compatibility" begin
         include(joinpath(testdir, "test_static.jl"))
     end
+
+    @time @testset "POMDPs.jl Interface" begin
+        include(joinpath(testdir, "test_pomdps.jl"))
+    end
 end
