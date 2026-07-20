@@ -5,6 +5,7 @@ using Logging
 using LinearAlgebra
 using Distributions
 using StableRNGs
+using StaticArrays
 
 # Package Under Test
 using GaussianFilters
@@ -64,5 +65,9 @@ end
     end
     @time @testset "GaussianFilter GM-PHD Testing" begin
         include(joinpath(testdir, "test_gmphd.jl"))
+    end
+
+    @time @testset "StaticArrays Compatibility" begin
+        include(joinpath(testdir, "test_static.jl"))
     end
 end

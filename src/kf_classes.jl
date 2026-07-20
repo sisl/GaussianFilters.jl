@@ -13,9 +13,9 @@ abstract type AbstractFilter end
 Construct Kalman filter with LinearDynamicsModel d and
 LinearObservationModel o.
 """
-struct KalmanFilter <: AbstractFilter
-    d::LinearDynamicsModel
-    o::LinearObservationModel
+struct KalmanFilter{D<:LinearDynamicsModel, O<:LinearObservationModel} <: AbstractFilter
+    d::D
+    o::O
 end
 
 """
@@ -26,13 +26,18 @@ end
 Construct Extended Kalman filter with DynamicsModel d and
 ObservationModel o.
 """
-struct ExtendedKalmanFilter <: AbstractFilter
-    d::DynamicsModel
-    o::ObservationModel
-    ExtendedKalmanFilter(d,o) =
-        (d isa LinearDynamicsModel && o isa LinearObservationModel) ?
-        error("linear models: use kf over ekf") : new(d,o)
+struct ExtendedKalmanFilter{D<:DynamicsModel, O<:ObservationModel} <: AbstractFilter
+    d::D
+    o::O
+    function ExtendedKalmanFilter{D,O}(d::D, o::O) where {D<:DynamicsModel, O<:ObservationModel}
+        (d isa LinearDynamicsModel && o isa LinearObservationModel) &&
+            error("linear models: use kf over ekf")
+        return new{D,O}(d, o)
+    end
 end
+
+ExtendedKalmanFilter(d::D, o::O) where {D<:DynamicsModel, O<:ObservationModel} =
+    ExtendedKalmanFilter{D,O}(d, o)
 
 """
     UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::Number,
@@ -45,24 +50,21 @@ and UKF parameters λ, α, and β. Default constructor uses α/β formulation fr
 Probabilistic Robotics, second constructor reduces complexity, third
 constructor defaults λ to 2, as is commonly done.
 """
-struct UnscentedKalmanFilter{a<:Number,b<:Number,c<:Number} <: AbstractFilter
-    d::DynamicsModel
-    o::ObservationModel
+struct UnscentedKalmanFilter{D<:DynamicsModel, O<:ObservationModel,
+                              a<:Number, b<:Number, c<:Number} <: AbstractFilter
+    d::D
+    o::O
     λ::a
     α::b
     β::c
-    #=
-    UnscentedKalmanFilter(d,o,λ,α,β) = (d isa LinearDynamicsModel && o isa LinearObservationModel) ?
-        error("linear models: use kf over ukf") : new(d,o,λ,α,β)
-    =#
 end
 
-function UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel,λ::a) where a<:Number
-    return UnscentedKalmanFilter{a,Int8,Int8}(d,o,λ,1,0)
+function UnscentedKalmanFilter(d::DynamicsModel, o::ObservationModel, λ::Number)
+    return UnscentedKalmanFilter(d, o, λ, 1, 0)
 end
 
-function UnscentedKalmanFilter(d::DynamicsModel,o::ObservationModel)
-    return UnscentedKalmanFilter{Int8,Int8,Int8}(d,o,2,1,0)
+function UnscentedKalmanFilter(d::DynamicsModel, o::ObservationModel)
+    return UnscentedKalmanFilter(d, o, 2, 1, 0)
 end
 
 ### Belief States ###
